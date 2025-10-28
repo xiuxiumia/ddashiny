@@ -8,13 +8,15 @@ library(DT)
 library(ggplot2)
 library(gridExtra)
 library(dda)
+library(moments)
+library(shinyjs)
 
 # 2. --- User Interface (UI) ----
 # Define UI for application
 ui <- navbarPage(
   # Set up the title
   title = "Direction Dependence Analysis (DDA)",
-  
+
   # First tab - Upload Data
   tabPanel(
     # Title
@@ -41,7 +43,7 @@ ui <- navbarPage(
       )
     )
   ),
-  
+
   # Second tab - Descriptive Statistics
   tabPanel(
     # Title
@@ -71,7 +73,7 @@ ui <- navbarPage(
       )
     )
   ),
-  
+
   # Third tab - DDA
   tabPanel(
     # Title
@@ -79,6 +81,7 @@ ui <- navbarPage(
     # Side Bar
     sidebarLayout(
       sidebarPanel(
+        h2("Select Covariates"),
         selectInput(
           inputId = "covar_n",
           label = "Select Numerical Covariates",
@@ -91,26 +94,109 @@ ui <- navbarPage(
           choices = NULL,
           multiple = TRUE
         ),
+        br(),
+        h2("DDA - Variables"),
         numericInput(
-          inputId = "bootstrap_number",
-          label = "Number of bootstrap samples",
-          value = 500
+          inputId = "bootstrap_number_v",
+          label = "Number of Bootstrap Samples",
+          value = 100
         ),
         selectInput(
-          inputId = "boot_type",
+          inputId = "boot_type_v",
           label = "Bootstrap Type",
           choices = c("perc", "bca"),
           selected = "perc"
         ),
         numericInput(
-          inputId = "confidence_interval",
+          inputId = "confidence_interval_v",
           label = "Bootstrap Confidence Intervals",
           value = .95,
           min = 0,
           max = 1
         ),
-        actionButton(inputId = "runDDA", label = "Run DDA")
+        br(),
+        h2("DDA - Residuals"),
+        numericInput(
+          inputId = "bootstrap_number_r",
+          label = "Number of Bootstrap Samples",
+          value = 100
+        ),
+        selectInput(
+          inputId = "boot_type_r",
+          label = "Bootstrap Type",
+          choices = c("perc", "bca"),
+          selected = "perc"
+        ),
+        numericInput(
+          inputId = "confidence_interval_r",
+          label = "Bootstrap Confidence Intervals",
+          value = .95,
+          min = 0,
+          max = 1
+        ),
+        selectInput(
+          inputId = "prob_trans",
+          label = "Probability Integral Transformation",
+          choices = c('"TRUE"', '"FASLE"'),
+          selected = '"TRUE"'
+        ),
+        br(),
+        h2("DDA - Independence"),
+         numericInput(
+          inputId = "nl_fun",
+          label = "Values Used for Power Transformation",
+          value = 2,
+        ),
+        selectInput(
+          inputId = "hetero_i",
+          label = "Separate Homoscedasticity Tests",
+          choices = c("TRUE", "FALSE"),
+          selected = "TRUE"
+        ),
+        selectInput(
+          inputId = "hsic_method",
+          label = "HSCI Inference Method",
+          choices = c("gamma", "eigenvalue", "boot", "permutation"),
+          selected = "gamma"
+        ),
+        useShinyjs(), 
+        selectInput(
+          inputId = "diff_test",
+          label = "Differences Tests",
+          choices = c("TRUE", "FALSE"),
+          selected = "FALSE"
+        ),
+        selectInput(
+          inputId = "parallelize_i",
+          label = "Multiple Cores",
+          choices = c("TRUE", "FALSE"),
+          selected = "TRUE"
+        ),
+        numericInput(
+          inputId = "cores_number",
+          label = "Number of Cores",
+          value = 1
+        ),
+        numericInput(
+          inputId = "bootstrap_number_i",
+          label = "Number of Bootstrap Samples",
+          value = 100
+        ),
+        selectInput(
+          inputId = "boot_type_i",
+          label = "Bootstrap Type",
+          choices = c("perc", "bca"),
+          selected = "perc"
+        ),
+        numericInput(
+          inputId = "confidence_interval_i",
+          label = "Bootstrap Confidence Intervals",
+          value = .95,
+          min = 0,
+          max = 1
+        )
       ),
+
       # Main Panel
       mainPanel(tabsetPanel(
         tabPanel(title = "Variables", verbatimTextOutput("DDA_var")),
@@ -119,6 +205,123 @@ ui <- navbarPage(
       ))
     )
   )
+
+  # # Fouth tab - CDDA
+  # tabPanel(
+  #   # Title
+  #   title = "CDDA Summary",
+  #   # Side Bar
+  #   sidebarLayout(
+  #     sidebarPanel(
+  #       h2("Select Covariates"),
+  #       selectInput(
+  #         inputId = "covar_n",
+  #         label = "Select Numerical Covariates",
+  #         choices = NULL,
+  #         multiple = TRUE
+  #       ),
+  #       selectInput(
+  #         inputId = "covar_c",
+  #         label = "Select Categorical Covariates",
+  #         choices = NULL,
+  #         multiple = TRUE
+  #       ),
+  #       br(),
+  #       h2("DDA - Variables"),
+  #       numericInput(
+  #         inputId = "bootstrap_number_v",
+  #         label = "Number of bootstrap samples",
+  #         value = 100
+  #       ),
+  #       selectInput(
+  #         inputId = "boot_type_v",
+  #         label = "Bootstrap Type",
+  #         choices = c("perc", "bca"),
+  #         selected = "perc"
+  #       ),
+  #       numericInput(
+  #         inputId = "confidence_interval_v",
+  #         label = "Bootstrap Confidence Intervals",
+  #         value = .95,
+  #         min = 0,
+  #         max = 1
+  #       ),
+  #       br(),
+  #       h2("DDA - Residuals"),
+  #       numericInput(
+  #         inputId = "bootstrap_number_r",
+  #         label = "Number of bootstrap samples",
+  #         value = 100
+  #       ),
+  #       selectInput(
+  #         inputId = "boot_type_r",
+  #         label = "Bootstrap Type",
+  #         choices = c("perc", "bca"),
+  #         selected = "perc"
+  #       ),
+  #       numericInput(
+  #         inputId = "confidence_interval_r",
+  #         label = "Bootstrap Confidence Intervals",
+  #         value = .95,
+  #         min = 0,
+  #         max = 1
+  #       ),
+  #       selectInput(
+  #         inputId = "prob_trans",
+  #         label = "Probability Integral Transformation",
+  #         choices = c('"TRUE"', '"FASLE"'),
+  #         selected = '"TRUE"'
+  #       ),
+  #       br(),
+  #       h2("DDA - Independence"),
+  #        numericInput(
+  #         inputId = "nl_fun",
+  #         label = "Values Used for Power Transformation",
+  #         value = 2,
+
+  #       ),
+  #       selectInput(
+  #         inputId = "diff_test",
+  #         label = "Differences Tests",
+  #         choices = c("TRUE", "FALSE"),
+  #         selected = "TRUE"
+  #       ),
+  #       numericInput(
+  #         inputId = "bootstrap_number_i",
+  #         label = "Number of bootstrap samples",
+  #         value = 100
+  #       ),
+  #       selectInput(
+  #         inputId = "boot_type_i",
+  #         label = "Bootstrap Type",
+  #         choices = c("perc", "bca"),
+  #         selected = "perc"
+  #       ),
+  #       numericInput(
+  #         inputId = "confidence_interval_i",
+  #         label = "Bootstrap Confidence Intervals",
+  #         value = .95,
+  #         min = 0,
+  #         max = 1
+  #       ),
+  #       br(),
+  #       fluidRow(column(
+  #         12,
+  #         align = "center",
+  #         actionButton(inputId = "runDDA", label = "Run DDA"),
+  #         tags$span(style = "margin-left: 50px;"), # space between
+  #         actionButton(inputId = "runCDDA", label = "Run CDDA")
+  #       ))
+  #     ),
+
+  #     # Main Panel
+  #     mainPanel(tabsetPanel(
+  #       tabPanel(title = "Variables", verbatimTextOutput("DDA_var")),
+  #       tabPanel(title = "Residuals", verbatimTextOutput("DDA_res")),
+  #       tabPanel(title = "Independence", verbatimTextOutput("DDA_ind"))
+  #     ))
+  #   )
+  # )
 )
 
 
@@ -129,19 +332,19 @@ server <- function(input, output, session) {
     req(input$document)
     read.csv(input$document$datapath)
   })
-  
+
   # Conditional output
   output$showMain1 <- reactive({
     !is.null(input$document)
   })
   outputOptions(output, "showMain1", suspendWhenHidden = FALSE)
-  
+
   output$tablePreview <- renderDT({
     req(data())
     datatable(head(data(), 10))
   })
-  
-  
+
+
   # --- Select variables and show descriptive statistics and visualization ---
   observe({
     req(data())
@@ -169,8 +372,13 @@ server <- function(input, output, session) {
       choices = names(data()),
       selected = ""
     )
+    if (input$diff_test == "TRUE") {
+      enable("parallelize_i")   # make selectable
+    } else {
+      disable("parallelize_i")  # greyed out, unclickable
+    }
   })
-  
+
   # Output: summary tables
   output$descTable_mainvars <- renderDataTable({
     req(data(), input$cause, input$effect)
@@ -179,26 +387,27 @@ server <- function(input, output, session) {
     desc_out <- as.data.frame(desc)
     desc_out <- desc_out[, c("n", "mean", "sd", "min", "max", "skew", "kurtosis")]
     num_cols <- c("mean", "sd", "min", "max", "skew", "kurtosis")
-    desc_out[num_cols] <- lapply(desc_out[num_cols], function(x)
-      round(x, 2))
+    desc_out[num_cols] <- lapply(desc_out[num_cols], function(x) {
+      round(x, 2)
+    })
     desc_out <- cbind(Variable = rownames(desc_out), desc_out)
     rownames(desc_out) <- NULL
     desc_out
   })
-  
+
   # Output: visualization
   output$hist <- renderPlot({
     req(data(), input$cause, input$effect)
-    
+
     # First histogram
     p1 <- ggplot(data(), aes(x = .data[[input$cause]])) +
       geom_histogram(
-        aes(y = ..density..),
+        aes(y = after_stat(density)),
         bins = 30,
         fill = "blue",
         color = "black"
       ) +
-      geom_density(color = "red", size = 1.2) +
+      geom_density(color = "red", linewidth = 1.2) +
       labs(
         title = paste("Histogram of", input$cause),
         x = input$cause,
@@ -213,16 +422,16 @@ server <- function(input, output, session) {
         ),
         panel.grid = element_blank()
       )
-    
+
     # Second histogram
     p2 <- ggplot(data(), aes(x = .data[[input$effect]])) +
       geom_histogram(
-        aes(y = ..density..),
+        aes(y = after_stat(density)),
         bins = 30,
         fill = "red",
         color = "black"
       ) +
-      geom_density(color = "blue", size = 1.2) +
+      geom_density(color = "blue", linewidth = 1.2) +
       labs(
         title = paste("Histogram of", input$effect),
         x = input$effect,
@@ -237,110 +446,92 @@ server <- function(input, output, session) {
         ),
         panel.grid = element_blank()
       )
-    
+
     # Display side by side
     grid.arrange(p1, p2, ncol = 2)
   })
-  
+
   # --- Select variables and show descriptive statistics and visualization ---
   # Action button
-  rundda <- eventReactive(input$runDDA, {
+  rundda <- reactive({
     req(data(), input$cause, input$effect)
-    
+
     # # Construct formula
-    # covariates <- paste(input$covariable, collapse = " + ")
-    # formula_str <- ifelse(covariates == "",
-    #                       paste(input$effect, "~", input$casue),
-    #                       paste(input$effect, "~", input$casue, "+", covariates)
-    # )
-    
+    # # ## Combine numeric covariates if not NULL
+    # covar_num <- if (!is.null(input$covar_n) &&
+    #   length(input$covar_n) > 0) {
+    #   paste(input$covar_n, collapse = " + ")
+    # } else {
+    #   NULL
+    # }
+
+    # # ## Combine categorical covariates if not NULL
+    # covar_cat <- if (!is.null(input$covar_c) &&
+    #   length(input$covar_c) > 0) {
+    #   paste(input$covar_c, collapse = " + ")
+    # } else {
+    #   NULL
+    # }
+
+    # # ## Combine both covariates
+    # covars <- paste(c(covar_num, covar_cat), collapse = " + ")
+
+    # covars <- if (covars == "") {
+    #   NULL
+    # } else {
+    #   covars
+    # }
+
+    # ## Construct the formula string
+    # formula_str <- if (is.null(covars)) {
+    #   paste(input$effect, "~", input$cause)
+    # } else {
+    #   paste(input$effect, "~", input$cause, "+", covars)
+    # }
+
     formula_str <- paste(input$effect, "~", input$cause)
-    
+
     formula <- as.formula(formula_str)
-    
-    
+
+
     # Fit DDA
     out.var <- dda.vardist(
       formula,
       pred = input$cause,
-      B = input$bootstrap_number,
-      boot.type = input$boot_type,
-      conf.level = input$confidence_interval,
+      B = input$bootstrap_number_v,
+      boot.type = input$boot_type_v,
+      conf.level = input$confidence_interval_v,
       data = data()
     )
     out.res <- dda.resdist(
       formula,
       pred = input$cause,
-      B = input$bootstrap_number,
-      boot.type = input$boot_type,
-      conf.level = input$confidence_interval,
-      #prob.trans = TRUE,
+      B = input$bootstrap_number_r,
+      boot.type = input$boot_type_r,
+      conf.level = input$confidence_interval_r,
+      prob.trans = input$prob_trans,
       data = data()
     )
     out.ind <- dda.indep(
       formula,
       pred = input$cause,
-      B = input$bootstrap_number,
-      boot.type = input$boot_type,
-      conf.level = input$confidence_interval,
-      #hsic.method = "gamma",
-      #nlfun = 2,
-      #diff = TRUE,
+      B = input$bootstrap_number_i,
+      boot.type = input$boot_type_i,
+      conf.level = input$confidence_interval_i,
+      hsic.method = input$hsic_method,
+      nlfun = input$nl_fun,
+      hetero = input$hetero_i,
+      diff = input$diff_test,
+      parallelize = ifelse(input$diff_test == "TRUE", input$parallelize_i == "TRUE", "FALSE"),
+      cores = ifelse(input$parallelize_i == "FALSE", 0, input$cores_number),
       data = data()
     )
-    
+
     # Return summary of DDA
     return(list(var = out.var, res = out.res, ind = out.ind))
   })
-  
-  
-  
-  # # Construct formula
-  # # ## Combine numeric covariates if not NULL
-  # covar_num <- if (!is.null(input$covar_n) &&
-  #                  length(input$covar_n) > 0) {
-  #   paste(input$covar_n, collapse = " + ")
-  # } else {
-  #   NULL
-  # }
-  #
-  # # ## Combine categorical covariates if not NULL
-  # covar_cat <- if (!is.null(input$covar_c) &&
-  #                  length(input$covar_c) > 0) {
-  #   paste(input$covar_c, collapse = " + ")
-  # } else {
-  #   NULL
-  # }
-  #
-  # # ## Combine both covariates
-  # covars <- paste(c(covar_num, covar_cat), collapse = " + ")
-  # # ## Remove trailing/leading "+" if covars is empty
-  # covars <- if (covars == "")
-  #   NULL
-  # else
-  #   covars
-  #
-  # # ##Construct the formula string
-  # formula_str <- if (is.null(covars)) {
-  #   paste(input$effect, "~", input$cause)
-  # } else {
-  #   paste(input$effect, "~", input$cause, "+", covars)
-  # }
-  #
-  # formula_str <- paste(input$effect, "~", input$cause)
-  # # ## final formula
-  # formula <- as.formula(formula_str)
-  #
-  #
-  #   # Return summary of DDA
-  #   return(list(
-  #     var = out.var,
-  #     res = out.res,
-  #     ind = out.ind
-  #   ))
-  #
-  
-  
+
+
   # Render DDA summary output
   # Variable Distributions
   output$DDA_var <- renderPrint({
@@ -348,14 +539,14 @@ server <- function(input, output, session) {
     result <- rundda()
     print(result$var)
   })
-  
+
   # Residual Distributions
   output$DDA_res <- renderPrint({
     req(rundda()) # Wait for eventReactive to trigger
     result <- rundda()
     print(result$res)
   })
-  
+
   # Independence Properties
   output$DDA_ind <- renderPrint({
     req(rundda()) # Wait for eventReactive to trigger
@@ -363,12 +554,15 @@ server <- function(input, output, session) {
     print(result$ind)
   })
 }
-  
+
 # 4. --- A Call to The ShinyApp ----
 shinyApp(ui = ui, server = server)
 
 
 # 1.show more descriptive statistics
 # 2.diagnosis of DDA
-# 3. show different options for those DDA functions.
-#4. download button. 
+# 3.show different options for those DDA functions. - done,
+# 4. download button.
+# 5. Do i need to change variables to factors 
+# 6. Add CDDA PAGE.
+# 7. Add conditional dropdown. OR GREY OUT  --- working on this for diff_test
