@@ -1,0 +1,23 @@
+---
+title: "DDA Report"
+output:
+  pdf_document: default
+params:
+  rundda_var: NULL
+  rundda_res: NULL
+  rundda_ind: NULL
+---
+# Variable Distribution
+```{r echo = FALSE}
+params$rundda_var
+```
+
+# Error Distribution
+```{r echo = FALSE}
+params$rundda_res
+```
+
+# Independenve Properties 
+```{r cecho = FALSE}
+params$rundda_ind
+```

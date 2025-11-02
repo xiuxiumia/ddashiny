@@ -10,6 +10,7 @@ library(gridExtra)
 library(dda)
 library(moments)
 library(shinyjs)
+library(rmarkdown)
 
 # 2. --- User Interface (UI) ----
 # Define UI for application
@@ -65,12 +66,10 @@ ui <- navbarPage(
         )
       ),
       # Main Panel
-      mainPanel(
-        h2("Summary Tables"),
-        tabPanel(title = "Summary", dataTableOutput("descTable_mainvars")),
-        h2("Visualizations"),
+      mainPanel(tabsetPanel(
+        tabPanel(title = "Summary Tables", dataTableOutput("descTable_mainvars")),
         tabPanel(title = "Visualiazation", plotOutput("hist"))
-      )
+      ))
     )
   ),
 
@@ -78,18 +77,20 @@ ui <- navbarPage(
   tabPanel(
     # Title
     title = "DDA Summary",
+    # For rmd
+    useShinyjs(),
     # Side Bar
     sidebarLayout(
       sidebarPanel(
         h2("Select Covariates"),
         selectInput(
-          inputId = "covar_n",
+          inputId = "Covar_n_dda",
           label = "Select Numerical Covariates",
           choices = NULL,
           multiple = TRUE
         ),
         selectInput(
-          inputId = "covar_c",
+          inputId = "Covar_c_dda",
           label = "Select Categorical Covariates",
           choices = NULL,
           multiple = TRUE
@@ -97,18 +98,18 @@ ui <- navbarPage(
         br(),
         h2("DDA - Variables"),
         numericInput(
-          inputId = "bootstrap_number_v",
+          inputId = "BootN_v_dda",
           label = "Number of Bootstrap Samples",
           value = 100
         ),
         selectInput(
-          inputId = "boot_type_v",
+          inputId = "BootType_v_dda",
           label = "Bootstrap Type",
           choices = c("perc", "bca"),
           selected = "perc"
         ),
         numericInput(
-          inputId = "confidence_interval_v",
+          inputId = "CI_v_dda",
           label = "Bootstrap Confidence Intervals",
           value = .95,
           min = 0,
@@ -117,25 +118,25 @@ ui <- navbarPage(
         br(),
         h2("DDA - Residuals"),
         numericInput(
-          inputId = "bootstrap_number_r",
+          inputId = "BootN_r_dda",
           label = "Number of Bootstrap Samples",
           value = 100
         ),
         selectInput(
-          inputId = "boot_type_r",
+          inputId = "BootType_r_dda",
           label = "Bootstrap Type",
           choices = c("perc", "bca"),
           selected = "perc"
         ),
         numericInput(
-          inputId = "confidence_interval_r",
+          inputId = "CI_r_dda",
           label = "Bootstrap Confidence Intervals",
           value = .95,
           min = 0,
           max = 1
         ),
         selectInput(
-          inputId = "prob_trans",
+          inputId = "ProbTrans_r_dda",
           label = "Probability Integral Transformation",
           choices = c("TRUE", "FASLE"),
           selected = "TRUE"
@@ -143,65 +144,66 @@ ui <- navbarPage(
         br(),
         h2("DDA - Independence"),
         numericInput(
-          inputId = "nl_fun",
+          inputId = "NlFun_i_dda",
           label = "Values Used for Power Transformation",
           value = 2
         ),
         selectInput(
-          inputId = "hetero_i",
+          inputId = "Hetero_i_dda",
           label = "Separate Homoscedasticity Tests",
           choices = c("TRUE", "FALSE"),
           selected = "TRUE"
         ),
         selectInput(
-          inputId = "hsic_method",
+          inputId = "HsicMethod_i_dda",
           label = "HSCI Inference Method",
           choices = c("gamma", "eigenvalue", "boot", "permutation"),
           selected = "gamma"
         ),
-        useShinyjs(),
         selectInput(
-          inputId = "diff_test",
+          inputId = "DiffTest_i_dda",
           label = "Differences Tests",
           choices = c("TRUE", "FALSE"),
           selected = "FALSE"
         ),
         selectInput(
-          inputId = "parallelize_i",
+          inputId = "Paral_i_dda",
           label = "Multiple Cores",
           choices = c("TRUE", "FALSE"),
           selected = "TRUE"
         ),
         numericInput(
-          inputId = "cores_number",
+          inputId = "CoresN_i_dda",
           label = "Number of Cores",
           value = 1
         ),
         numericInput(
-          inputId = "bootstrap_number_i",
+          inputId = "BootN_i_dda",
           label = "Number of Bootstrap Samples",
           value = 100
         ),
         selectInput(
-          inputId = "boot_type_i",
+          inputId = "BootType_i_dda",
           label = "Bootstrap Type",
           choices = c("perc", "bca"),
           selected = "perc"
         ),
         numericInput(
-          inputId = "confidence_interval_i",
+          inputId = "CI_i_dda",
           label = "Bootstrap Confidence Intervals",
           value = .95,
           min = 0,
           max = 1
-        )
+        ),
+        br(),
+        downloadButton("downloadReport1", "Export Report", icon = shiny::icon("file-pdf"))
       ),
 
       # Main Panel
       mainPanel(tabsetPanel(
-        tabPanel(title = "Variables", verbatimTextOutput("DDA_var")),
-        tabPanel(title = "Residuals", verbatimTextOutput("DDA_res")),
-        tabPanel(title = "Independence", verbatimTextOutput("DDA_ind"))
+        tabPanel(title = "Variables", verbatimTextOutput("dda_var")),
+        tabPanel(title = "Residuals", verbatimTextOutput("dda_res")),
+        tabPanel(title = "Independence", verbatimTextOutput("dda_ind"))
       ))
     )
   ),
@@ -210,6 +212,8 @@ ui <- navbarPage(
   tabPanel(
     # Title
     title = "CDDA Summary",
+    # For rmd
+    useShinyjs(),
     # Side Bar
     sidebarLayout(
       sidebarPanel(
@@ -220,15 +224,16 @@ ui <- navbarPage(
           choices = NULL,
           multiple = FALSE
         ),
+        br(),
         h2("Select Covariates"),
         selectInput(
-          inputId = "covar_n_cdda",
+          inputId = "Covar_n_cdda",
           label = "Select Numerical Covariates",
           choices = NULL,
           multiple = TRUE
         ),
         selectInput(
-          inputId = "covar_c_cdda",
+          inputId = "Covar_c_cdda",
           label = "Select Categorical Covariates",
           choices = NULL,
           multiple = TRUE
@@ -236,24 +241,24 @@ ui <- navbarPage(
         br(),
         h2("CDDA - Variables"),
         textInput(
-          inputId = "modval_cdda",
+          inputId = "Modval_v_cdda",
           label = "Methods to Specify the Moderator Value",
-          value = "",
+          value = "mean",
           placeholder = NULL
         ),
         numericInput(
-          inputId = "bootstrap_number_v_cdda",
+          inputId = "BootN_v_cdda",
           label = "Number of Bootstrap Samples",
           value = 100
         ),
         selectInput(
-          inputId = "boot_type_v_cdda",
+          inputId = "BootType_v_cdda",
           label = "Bootstrap Type",
           choices = c("perc", "bca"),
-          selected = "bca"
+          selected = "perc"
         ),
         numericInput(
-          inputId = "confidence_interval_v_cdda",
+          inputId = "CI_v_cdda",
           label = "Bootstrap Confidence Intervals",
           value = .95,
           min = 0,
@@ -261,65 +266,72 @@ ui <- navbarPage(
         ),
         br(),
         h2("CDDA - Independence"),
-        numericInput(
-          inputId = "nl_fun_cdda",
-          label = "Values Used for Power Transformation",
-          value = 2
+        textInput(
+          inputId = "Modval_i_cdda",
+          label = "Methods to Specify the Moderator Value",
+          value = "c(-1, 1)",
+          placeholder = NULL
         ),
         selectInput(
-          inputId = "hetero_i_cdda",
+          inputId = "Hetero_i_cdda",
           label = "Separate Homoscedasticity Tests",
           choices = c("TRUE", "FALSE"),
-          selected = "TRUE"
+          selected = "FALSE"
         ),
         selectInput(
-          inputId = "hsic_method_cdda",
-          label = "HSCI Inference Method",
-          choices = c("gamma", "eigenvalue", "boot", "permutation"),
-          selected = "gamma"
-        ),
-        useShinyjs(),
-        selectInput(
-          inputId = "diff_test_cdda",
+          inputId = "DiffTest_i_cdda",
           label = "Differences Tests",
           choices = c("TRUE", "FALSE"),
           selected = "FALSE"
         ),
         selectInput(
-          inputId = "parallelize_i_cdda",
+          inputId = "Paral_i_cdda",
           label = "Multiple Cores",
           choices = c("TRUE", "FALSE"),
-          selected = "TRUE"
+          selected = "FALSE"
         ),
         numericInput(
-          inputId = "cores_number_cdda",
+          inputId = "CoresN_i_cdda",
           label = "Number of Cores",
           value = 1
         ),
         numericInput(
-          inputId = "bootstrap_number_i_cdda",
-          label = "Number of Bootstrap Samples",
-          value = 100
+          inputId = "NlFun_i_cdda",
+          label = "Values Used for Power Transformation",
+          value = 2
         ),
         selectInput(
-          inputId = "boot_type_i_cdda",
+          inputId = "HsicMethod_i_cdda",
+          label = "HSCI Inference Method",
+          choices = c("gamma", "eigenvalue", "boot", "permutation"),
+          selected = "gamma"
+        ),
+        numericInput(
+          inputId = "BootN_i_cdda",
+          label = "Number of Bootstrap Samples",
+          value = 200
+        ),
+        selectInput(
+          inputId = "BootType_i_cdda",
           label = "Bootstrap Type",
           choices = c("perc", "bca"),
           selected = "perc"
         ),
         numericInput(
-          inputId = "confidence_interval_i_cdda",
+          inputId = "CI_i_cdda",
           label = "Bootstrap Confidence Intervals",
           value = .95,
           min = 0,
           max = 1
-        )
+        ),
+        br(),
+        downloadButton("downloadReport2", "Export Report", icon = shiny::icon("file-pdf"))
       ),
 
       # Main Panel
       mainPanel(tabsetPanel(
-        tabPanel(title = "Variables", verbatimTextOutput("CDDA_var")),
-        tabPanel(title = "Independence", verbatimTextOutput("CDDA_ind"))
+        tabPanel(title = "Variables", verbatimTextOutput("cdda_var")),
+        tabPanel(title = "Independence", verbatimTextOutput("cdda_ind"))
       ))
     )
   )
@@ -362,13 +374,13 @@ server <- function(input, output, session) {
     )
     updateSelectInput(
       session,
-      inputId = "covar_n",
+      inputId = "Covar_n_dda",
       choices = names(data()),
       selected = ""
     )
     updateSelectInput(
       session,
-      inputId = "covar_c",
+      inputId = "Covar_c_dda",
       choices = names(data()),
       selected = ""
     )
@@ -382,37 +394,102 @@ server <- function(input, output, session) {
 
     updateSelectInput(
       session,
-      inputId = "covar_n_cdda",
+      inputId = "Covar_n_cdda",
       choices = names(data()),
       selected = ""
     )
 
     updateSelectInput(
       session,
-      inputId = "covar_c_cdda",
+      inputId = "Covar_c_cdda",
       choices = names(data()),
       selected = ""
     )
   })
 
-  observeEvent(input$diff_test, {
-    if (input$diff_test == "TRUE") {
-      shinyjs::enable("parallelize_i") # make selectable
-    } else {
-      shinyjs::disable("parallelize_i") # greyed out, unclickable
-      updateSelectInput(session, "parallelize_i", selected = "FALSE")
+  observeEvent(list(input$HsicMethod_i_dda, input$DiffTest_i_dda, input$BootType_i_dda, input$CI_i_dda), {
+    if (input$HsicMethod_i_dda %in% c("boot", "permutation") || input$DiffTest_i_dda == "TRUE") {
+      shinyjs::show("BootN_i_dda") # make selectable
+      updateNumericInput(session, "BootN_i_dda", value = 100)
 
-      shinyjs::disable("cores_number")
-      updateNumericInput(session, "cores_number", value = 1)
+      shinyjs::show("BootType_i_dda") # greyed out, unclickable
+      updateSelectInput(session, "BootType_i_dda", selected = "perc")
+
+      shinyjs::show("CI_i_dda") # greyed out, unclickable
+      updateNumericInput(session, "CI_i_dda", value = "0.95")
+    } else {
+      shinyjs::hide("BootN_i_dda") # greyed out, unclickable
+      updateNumericInput(session, "BootN_i_dda", value = NULL)
+
+      shinyjs::hide("BootType_i_dda") # greyed out, unclickable
+      updateSelectInput(session, "BootType_i_dda", selected = NULL)
+
+      shinyjs::hide("CI_i_dda") # greyed out, unclickable
+      updateNumericInput(session, "CI_i_dda", value = NULL)
     }
   })
 
-  observeEvent(input$parallelize_i, {
-    if (input$parallelize_i == "TRUE") {
-      shinyjs::enable("cores_number")
+  observeEvent(input$DiffTest_i_dda, {
+    if (input$DiffTest_i_dda == "TRUE") {
+      shinyjs::show("Paral_i_dda") # make selectable
     } else {
-      shinyjs::disable("cores_number")
-      updateNumericInput(session, "cores_number", value = 1)
+      shinyjs::hide("Paral_i_dda") # greyed out, unclickable
+      updateSelectInput(session, "Paral_i_dda", selected = "FALSE")
+
+      shinyjs::hide("CoresN_i_dda")
+      updateNumericInput(session, "CoresN_i_dda", value = 1)
+    }
+  })
+
+  observeEvent(input$Paral_i_dda, {
+    if (input$Paral_i_dda == "TRUE") {
+      shinyjs::show("CoresN_i_dda")
+    } else {
+      shinyjs::hide("CoresN_i_dda")
+      updateNumericInput(session, "CoresN_i_dda", value = 1)
+    }
+  })
+
+  observeEvent(list(input$HsicMethod_i_cdda, input$DiffTest_i_cdda, input$BootType_i_cdda, input$CI_i_cdda), {
+    if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
+      shinyjs::show("BootN_i_cdda") # make selectable
+      updateNumericInput(session, "BootN_i_cdda", value = 100)
+
+      shinyjs::show("BootType_i_cdda") # greyed out, unclickable
+      updateSelectInput(session, "BootType_i_cdda", selected = "perc")
+
+      shinyjs::show("CI_i_cdda") # greyed out, unclickable
+      updateNumericInput(session, "CI_i_cdda", value = "0.95")
+    } else {
+      shinyjs::hide("BootN_i_cdda") # greyed out, unclickable
+      updateNumericInput(session, "BootN_i_cdda", value = NULL)
+
+      shinyjs::hide("BootType_i_cdda") # greyed out, unclickable
+      updateSelectInput(session, "BootType_i_cdda", selected = NULL)
+
+      shinyjs::hide("CI_i_cdda") # greyed out, unclickable
+      updateNumericInput(session, "CI_i_cdda", value = NULL)
+    }
+  })
+
+  observeEvent(input$DiffTest_i_cdda, {
+    if (input$DiffTest_i_cdda == "TRUE") {
+      shinyjs::show("Paral_i_cdda") # make selectable
+    } else {
+      shinyjs::hide("Paral_i_cdda") # greyed out, unclickable
+      updateSelectInput(session, "Paral_i_cdda", selected = "FALSE")
+
+      shinyjs::hide("CoresN_i_cdda")
+      updateNumericInput(session, "CoresN_i_cdda", value = 1)
+    }
+  })
+
+  observeEvent(input$Paral_i_cdda, {
+    if (input$Paral_i_cdda == "TRUE") {
+      shinyjs::show("CoresN_i_cdda")
+    } else {
+      shinyjs::hide("CoresN_i_cdda")
+      updateNumericInput(session, "CoresN_i_cdda", value = 1)
     }
   })
 
@@ -497,18 +574,18 @@ server <- function(input, output, session) {
     formula_str <- paste(input$effect, "~", input$cause)
     formula <- as.formula(formula_str)
 
-    out.var <- dda.vardist(
+    out_var <- dda.vardist(
       formula,
       pred = input$cause,
-      B = input$bootstrap_number_v,
-      boot.type = input$boot_type_v,
-      conf.level = input$confidence_interval_v,
+      B = input$BootN_v_dda,
+      boot.type = input$BootType_v_dda,
+      conf.level = input$CI_v_dda,
       data = data()
     )
-    return(out.var)
+    return(out_var)
   })
 
-  output$DDA_var <- renderPrint({
+  output$dda_var <- renderPrint({
     req(rundda_var())
     print(rundda_var())
   })
@@ -553,20 +630,20 @@ server <- function(input, output, session) {
     formula_str <- paste(input$effect, "~", input$cause)
     formula <- as.formula(formula_str)
 
-    out.res <- dda.resdist(
+    out_res <- dda.resdist(
       formula,
       pred = input$cause,
-      B = input$bootstrap_number_r,
-      boot.type = input$boot_type_r,
-      conf.level = input$confidence_interval_r,
-      prob.trans = paste0('"', input$prob_trans, "'"),
+      B = input$BootN_r_dda,
+      boot.type = input$BootType_r_dda,
+      conf.level = input$CI_r_dda,
+      prob.trans = paste0('"', input$ProbTrans_r_dda, "'"),
       data = data()
     )
 
-    return(out.res)
+    return(out_res)
   })
 
-  output$DDA_res <- renderPrint({
+  output$dda_res <- renderPrint({
     req(rundda_res())
     print(rundda_res())
   })
@@ -610,117 +687,159 @@ server <- function(input, output, session) {
     formula_str <- paste(input$effect, "~", input$cause)
     formula <- as.formula(formula_str)
 
-    out.ind <- dda.indep(
-      formula,
+    # build argument list
+    args <- list(
+      formula = formula,
       pred = input$cause,
-      B = input$bootstrap_number_i,
-      boot.type = input$boot_type_i,
-      conf.level = input$confidence_interval_i,
-      hsic.method = input$hsic_method,
-      nlfun = input$nl_fun,
-      hetero = input$hetero_i,
-      diff = input$diff_test,
-      parallelize = ifelse(input$diff_test == "TRUE", input$parallelize_i == "TRUE", "FALSE"),
-      cores = ifelse(input$parallelize_i == "FALSE", 0, input$cores_number),
+      hsic.method = input$HsicMethod_i_dda,
+      nlfun = input$NlFun_i_dda,
+      hetero = input$Hetero_i_dda,
+      diff = input$DiffTest_i_dda,
+      parallelize = ifelse(input$DiffTest_i_dda == "TRUE", input$Paral_i_dda == "TRUE", FALSE),
+      cores = ifelse(input$Paral_i_dda == "FALSE", 0, input$CoresN_i_dda),
       data = data()
     )
 
-    return(out.ind)
+    # Add optional arguments only if relevant
+    if (input$HsicMethod_i_dda %in% c("boot", "permutation") || input$DiffTest_i_dda == "TRUE") {
+      args$B <- input$BootN_i_dda
+      args$boot.type <- input$BootType_i_dda
+      args$conf.level <- input$CI_i_dda
+    }
+
+    # Run the function
+    out_ind <- do.call(dda.indep, args)
+
+    return(out_ind)
   })
 
-  output$DDA_ind <- renderPrint({
+  output$dda_ind <- renderPrint({
     req(rundda_ind())
     print(rundda_ind())
   })
+
+  ## Download report
+  output$downloadReport1 <- downloadHandler(
+    filename = "DDA Report.pdf",
+    content = function(file) {
+      src <- normalizePath("DDA_Report.Rmd")
+
+      # temporarily switch to the temp dir, in case you do not have write
+      # permission to the current working directory
+      owd <- setwd(tempdir())
+      on.exit(setwd(owd))
+      file.copy(src, "DDA_Report.Rmd", overwrite = TRUE)
+
+      out <- render("DDA_Report.Rmd",
+        output_format = pdf_document(),
+        params = list(
+          rundda_var = rundda_var(),
+          rundda_res = rundda_res(),
+          rundda_ind = rundda_ind()
+        ),
+        envir = new.env(parent = globalenv())
+      )
+
+      file.rename(out, file)
+    }
+  )
 
   # --- CDDA ---
   # Variables
   runcdda_var <- reactive({
     req(data(), input$cause, input$effect, input$mod_cdda)
 
+    pred <- input$cause
+    mod <- input$mod_cdda
+
     formula_str <- paste(input$effect, "~", paste(input$cause, "*", input$mod_cdda))
     formula <- as.formula(formula_str)
 
-    out.cvar <- cdda.vardist(
-      formula,
-      pred = input$cause,
-      mod = input$mod_cdda,
-      modval = input$modval_cdda,
-      B = input$bootstrap_number_v,
-      boot.type = input$boot_type_v,
-      conf.level = input$confidence_interval_v,
+    m <- lm(formula, data = data())
+
+    out_var <- cdda.vardist(
+      m,
+      pred = pred,
+      mod = mod,
+      modval = input$Modval_v_cdda,
+      B = input$BootN_v_cdda,
+      boot.type = input$BootType_v_cdda,
+      conf.level = input$CI_v_cdda,
       data = data()
     )
-    return(out.cvar)
+    return(out_var)
   })
 
-  output$CDDA_var <- renderPrint({
+  output$cdda_var <- renderPrint({
     req(runcdda_var())
     print(runcdda_var())
   })
 
-
   runcdda_ind <- reactive({
-    req(data(), input$cause, input$effect)
+    req(data(), input$cause, input$effect, input$mod_cdda)
 
-    # # Construct formula
-    # # ## Combine numeric covariates if not NULL
-    # covar_num <- if (!is.null(input$covar_n) &&
-    #   length(input$covar_n) > 0) {
-    #   paste(input$covar_n, collapse = " + ")
-    # } else {
-    #   NULL
-    # }
+    pred <- input$cause
+    mod <- input$mod_cdda
 
-    # # ## Combine categorical covariates if not NULL
-    # covar_cat <- if (!is.null(input$covar_c) &&
-    #   length(input$covar_c) > 0) {
-    #   paste(input$covar_c, collapse = " + ")
-    # } else {
-    #   NULL
-    # }
-
-    # # ## Combine both covariates
-    # covars <- paste(c(covar_num, covar_cat), collapse = " + ")
-
-    # covars <- if (covars == "") {
-    #   NULL
-    # } else {
-    #   covars
-    # }
-
-    # ## Construct the formula string
-    # formula_str <- if (is.null(covars)) {
-    #   paste(input$effect, "~", input$cause)
-    # } else {
-    #   paste(input$effect, "~", input$cause, "+", covars)
-    # }
-
-    formula_str <- paste(input$effect, "~", input$cause)
+    formula_str <- paste(input$effect, "~", paste(input$cause, "*", input$mod_cdda))
     formula <- as.formula(formula_str)
 
-    out.cind <- cdda.indep(
-      formula,
+    m <- lm(formula, data = data())
+
+    # build argument list
+    args <- list(
+      formula = formula,
       pred = input$cause,
-      B = input$bootstrap_number_i,
-      boot.type = input$boot_type_i,
-      conf.level = input$confidence_interval_i,
-      hsic.method = input$hsic_method,
-      nlfun = input$nl_fun,
-      hetero = input$hetero_i,
-      diff = input$diff_test,
-      parallelize = ifelse(input$diff_test == "TRUE", input$parallelize_i == "TRUE", "FALSE"),
-      cores = ifelse(input$parallelize_i == "FALSE", 0, input$cores_number),
+      hsic.method = input$HsicMethod_i_cdda,
+      nlfun = input$NlFun_i_cdda,
+      hetero = input$Hetero_i_cdda,
+      diff = input$DiffTest_i_cdda,
+      parallelize = ifelse(input$DiffTest_i_cdda == "TRUE", input$Paral_i_cdda == "TRUE", FALSE),
+      cores = ifelse(input$Paral_i_cdda == "FALSE", 0, input$CoresN_i_cdda),
       data = data()
     )
 
-    return(out.cind)
+    # Add optional arguments only if relevant
+    if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
+      args$B <- input$BootN_i_cdda
+      args$boot.type <- input$BootType_i_cdda
+      args$conf.level <- input$CI_i_cdda
+    }
+
+    # Run the function
+    out_ind <- do.call(dda.indep, args)
+    return(out_ind)
   })
 
-  output$CDDA_ind <- renderPrint({
+  output$cdda_ind <- renderPrint({
     req(runcdda_ind())
     print(runcdda_ind())
   })
+
+  ## Download report
+  output$downloadReport2 <- downloadHandler(
+    filename = "CDDA Report.pdf",
+    content = function(file) {
+      src <- normalizePath("CDDA_Report.Rmd")
+
+      # temporarily switch to the temp dir, in case you do not have write
+      # permission to the current working directory
+      owd <- setwd(tempdir())
+      on.exit(setwd(owd))
+      file.copy(src, "CDDA_Report.Rmd", overwrite = TRUE)
+
+      out <- render("CDDA_Report.Rmd",
+        output_format = pdf_document(),
+        params = list(
+          runcdda_var = runcdda_var(),
+          runcdda_ind = runcdda_ind()
+        ),
+        envir = new.env(parent = globalenv())
+      )
+
+      file.rename(out, file)
+    }
+  )
 }
 
 # 4. --- A Call to The ShinyApp ----
@@ -729,5 +848,21 @@ shinyApp(ui = ui, server = server)
 
 # 1.show more descriptive statistics
 # 2.diagnosis of DDA
-# 4. download button.
-# 6. Add CDDA PAGE. -- Working on it: Constructing the formula in cdda.
+# 3.Add plots of CDDA
+
+# Problem 1
+# When I use the bootstrap type as bca, the number of bootstrap samples has to be what number?
+# now 1300 need to find the number, this happend in both dda and cdda.
+
+# Problem 2
+# When I select boot for HSIC Inference method
+# Error: object 'critical_value' not found
+
+# Problem 3
+# Do i need to change variables to factors in both DDA and CDDA?
+
+# Problem 5
+# Modaval input? Do i need that?, what should i put, can the model run without it?
+
+# nlfun
+# A logical value indicating whether non-linear correlation tests should be returned when using summary, default is FALSE.

@@ -1,0 +1,18 @@
+---
+title: "CDDA Report"
+output:
+  pdf_document: default
+params:
+  runcdda_var: NULL
+  runcdda_ind: NULL
+---
+
+# Variable Distribution
+```{r echo = FALSE}
+params$runcdda_var
+```
+
+# Independenve Properties 
+```{r cecho = FALSE}
+params$runcdda_ind
+```
