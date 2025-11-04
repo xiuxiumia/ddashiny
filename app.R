@@ -269,7 +269,7 @@ ui <- navbarPage(
         textInput(
           inputId = "Modval_i_cdda",
           label = "Methods to Specify the Moderator Value",
-          value = "c(-1, 1)",
+          value = "mean",
           placeholder = NULL
         ),
         selectInput(
@@ -282,7 +282,7 @@ ui <- navbarPage(
           inputId = "DiffTest_i_cdda",
           label = "Differences Tests",
           choices = c("TRUE", "FALSE"),
-          selected = "FALSE"
+          selected = "TRUE" # <------ change to FALSE
         ),
         selectInput(
           inputId = "Paral_i_cdda",
@@ -309,7 +309,7 @@ ui <- navbarPage(
         numericInput(
           inputId = "BootN_i_cdda",
           label = "Number of Bootstrap Samples",
-          value = 200
+          value = 2 # <--- change to 200
         ),
         selectInput(
           inputId = "BootType_i_cdda",
@@ -329,10 +329,29 @@ ui <- navbarPage(
       ),
 
       # Main Panel
-      mainPanel(tabsetPanel(
-        tabPanel(title = "Variables", verbatimTextOutput("cdda_var")),
-        tabPanel(title = "Independence", verbatimTextOutput("cdda_ind"))
-      ))
+      mainPanel(
+        tabsetPanel(
+          tabPanel(
+            title = "Variables",
+            verbatimTextOutput("cdda_var"),
+            uiOutput("plotControls1"),
+            plotOutput("cdda_var_plot"),
+            uiOutput("summaryControls1"),
+            verbatimTextOutput("cdda_var_summary")
+          ),
+          tabPanel(
+            title = "Independence",
+            verbatimTextOutput("cdda_ind"),
+            uiOutput("plotControls2"),
+            conditionalPanel(
+              condition = "input.DiffTest_i_cdda == 'TRUE'",
+              plotOutput("cdda_ind_plot")
+            ),
+            uiOutput("summaryControls2"),
+            verbatimTextOutput("cdda_ind_summary")
+          )
+        )
+      )
     )
   )
 )
@@ -453,7 +472,7 @@ server <- function(input, output, session) {
   observeEvent(list(input$HsicMethod_i_cdda, input$DiffTest_i_cdda, input$BootType_i_cdda, input$CI_i_cdda), {
     if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
       shinyjs::show("BootN_i_cdda") # make selectable
-      updateNumericInput(session, "BootN_i_cdda", value = 100)
+      updateNumericInput(session, "BootN_i_cdda", value = 2)
 
       shinyjs::show("BootType_i_cdda") # greyed out, unclickable
       updateSelectInput(session, "BootType_i_cdda", selected = "perc")
@@ -472,18 +491,6 @@ server <- function(input, output, session) {
     }
   })
 
-  observeEvent(input$DiffTest_i_cdda, {
-    if (input$DiffTest_i_cdda == "TRUE") {
-      shinyjs::show("Paral_i_cdda") # make selectable
-    } else {
-      shinyjs::hide("Paral_i_cdda") # greyed out, unclickable
-      updateSelectInput(session, "Paral_i_cdda", selected = "FALSE")
-
-      shinyjs::hide("CoresN_i_cdda")
-      updateNumericInput(session, "CoresN_i_cdda", value = 1)
-    }
-  })
-
   observeEvent(input$Paral_i_cdda, {
     if (input$Paral_i_cdda == "TRUE") {
       shinyjs::show("CoresN_i_cdda")
@@ -491,6 +498,107 @@ server <- function(input, output, session) {
       shinyjs::hide("CoresN_i_cdda")
       updateNumericInput(session, "CoresN_i_cdda", value = 1)
     }
+  })
+
+  observeEvent(input$DiffTest_i_cdda, {
+    if (input$DiffTest_i_cdda == "TRUE") {
+      shinyjs::show("plotControls2")
+    } else {
+      shinyjs::hide("plotControls2")
+    }
+  })
+
+  output$plotControls1 <- renderUI({
+    req(runcdda_var())
+    fluidRow(
+      br(),
+      h2("Plot Options"),
+      column(
+        3,
+        selectInput(
+          inputId = "stat_var",
+          label = "Statistics",
+          choices = c("coskew", "cokurt", "rhs", "rcc", "rtanh"),
+          selected = "rhs"
+        )
+      ),
+      column(
+        6,
+        splitLayout(
+          cellWidths = c("50%", "50%"),
+          numericInput("ylim_min_var", "Y-axis min", value = NA, step = 1),
+          numericInput("ylim_max_var", "Y-axis max", value = NA, step = 1)
+        )
+      )
+    )
+  })
+
+  output$summaryControls1 <- renderUI({
+    req(runcdda_var()) # wait until the plot data is ready
+    fluidRow(
+      br(),
+      h2("Summary Options"),
+      column(
+        3,
+        selectInput("skew", "Skewness", choices = c("TRUE", "FALSE"), selected = "TRUE")
+      ),
+      column(
+        3,
+        selectInput("coskew", "Co-Skewness", choices = c("TRUE", "FALSE"), selected = "FALSE")
+      ),
+      column(
+        3,
+        selectInput("kurt", "Kurtosis", choices = c("TRUE", "FALSE"), selected = "TRUE")
+      ),
+      column(
+        3,
+        selectInput("cokurt", "Co-Kurtosis", choices = c("TRUE", "FALSE"), selected = "FALSE")
+      )
+    )
+  })
+
+  output$plotControls2 <- renderUI({
+    req(runcdda_ind()) # wait until the plot data is ready
+    fluidRow(
+      br(),
+      h2("Plot Options"),
+      column(
+        3,
+        selectInput(
+          inputId = "stat_ind",
+          label = "Statistics",
+          choices = c("hsic.diff", "dcor.diff", "mi.diff"),
+          selected = "hsic.diff"
+        )
+      ),
+      column(
+        6,
+        splitLayout(
+          cellWidths = c("50%", "50%"),
+          numericInput("ylim_min_ind", "Y-axis min", value = NA, step = 1),
+          numericInput("ylim_max_ind", "Y-axis max", value = NA, step = 1)
+        )
+      )
+    )
+  })
+
+  output$summaryControls2 <- renderUI({
+    req(runcdda_ind())
+    fluidRow(
+      br(),
+      h2("Summary Options"),
+      column(
+        6,
+        selectInput("hsic", "HSIC", choices = c("TRUE", "FALSE"), selected = "TRUE"),
+        selectInput("dcor", "Distance Correlation", choices = c("TRUE", "FALSE"), selected = "TRUE")
+      ),
+      column(
+        6,
+        selectInput("hsic.diff", "HSIC Difference", choices = c("TRUE", "FALSE"), selected = "FALSE"),
+        selectInput("dcor.diff", "Distance Correlation Difference", choices = c("TRUE", "FALSE"), selected = "FALSE"),
+        selectInput("mi.diff", "Mutual Information Difference", choices = c("TRUE", "FALSE"), selected = "FALSE")
+      )
+    )
   })
 
 
@@ -775,45 +883,106 @@ server <- function(input, output, session) {
     print(runcdda_var())
   })
 
+  output$cdda_var_plot <- renderPlot({
+    req(runcdda_var())
+    ymin <- input$ylim_min_var
+    ymax <- input$ylim_max_var
+    ylim_vals <- if (!is.na(ymin) && !is.na(ymax)) c(ymin, ymax) else NULL
+
+    args <- list(
+      x = runcdda_var(),
+      stat = input$stat_var
+    )
+    if (!is.null(ylim_vals)) args$ylim <- ylim_vals
+    do.call(plot, args)
+  })
+
+  output$cdda_var_summary <- renderPrint({
+    req(runcdda_var())
+    res <- summary(
+      object = runcdda_var(),
+      skew = input$skew,
+      coskew = input$coskew,
+      kurt = input$kurt,
+      cokurt = input$cokurt
+    )
+    print(res)
+  })
+
   runcdda_ind <- reactive({
     req(data(), input$cause, input$effect, input$mod_cdda)
 
     pred <- input$cause
     mod <- input$mod_cdda
 
+    B <- NULL
+    boot.type <- NULL
+    conf.level <- NULL
+
+    if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
+      B <- input$BootN_i_cdda
+      boot.type <- input$BootType_i_cdda
+      conf.level <- input$CI_i_cdda
+    }
+    parallelize <- ifelse(input$DiffTest_i_cdda == "TRUE", FALSE, TRUE)
+    cores <- ifelse(input$Paral_i_cdda == "FALSE", 0, input$CoresN_i_cdda)
     formula_str <- paste(input$effect, "~", paste(input$cause, "*", input$mod_cdda))
     formula <- as.formula(formula_str)
 
     m <- lm(formula, data = data())
 
-    # build argument list
-    args <- list(
-      formula = formula,
-      pred = input$cause,
+    out_ind <- cdda.indep(
+      formula = m,
+      pred = pred,
+      mod = mod,
+      modval = input$Modval_i_cdda,
       hsic.method = input$HsicMethod_i_cdda,
       nlfun = input$NlFun_i_cdda,
       hetero = input$Hetero_i_cdda,
       diff = input$DiffTest_i_cdda,
-      parallelize = ifelse(input$DiffTest_i_cdda == "TRUE", input$Paral_i_cdda == "TRUE", FALSE),
-      cores = ifelse(input$Paral_i_cdda == "FALSE", 0, input$CoresN_i_cdda),
+      B = B,
+      boot.type = boot.type,
+      conf.level = conf.level,
+      parallelize = parallelize,
+      cores = cores,
       data = data()
     )
 
-    # Add optional arguments only if relevant
-    if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
-      args$B <- input$BootN_i_cdda
-      args$boot.type <- input$BootType_i_cdda
-      args$conf.level <- input$CI_i_cdda
-    }
-
-    # Run the function
-    out_ind <- do.call(dda.indep, args)
     return(out_ind)
   })
 
   output$cdda_ind <- renderPrint({
     req(runcdda_ind())
     print(runcdda_ind())
+  })
+
+  output$cdda_ind_plot <- renderPlot({
+    req(runcdda_ind())
+
+    ymin <- input$ylim_min_ind
+    ymax <- input$ylim_max_var
+    ylim_vals <- if (!is.na(ymin) && !is.na(ymax)) c(ymin, ymax) else NULL
+
+    args <- list(
+      x = runcdda_ind(),
+      stat = input$stat_ind
+    )
+    if (!is.null(ylim_vals)) args$ylim <- ylim_vals
+    do.call(plot, args)
+  })
+
+  output$cdda_ind_summary <- renderPrint({
+    req(runcdda_ind())
+    cdda_ind_res <- runcdda_ind()
+    res <- summary(
+      object = cdda_ind_res,
+      hsic = input$hsic,
+      dcor = input$dcor,
+      hsic.diff = input$hsic.diff,
+      dcor.diff = input$dcor.diff,
+      mi.diff = input$mi.diff
+    )
+    print(res)
   })
 
   ## Download report
@@ -828,11 +997,58 @@ server <- function(input, output, session) {
       on.exit(setwd(owd))
       file.copy(src, "CDDA_Report.Rmd", overwrite = TRUE)
 
+      req(runcdda_var())
+      ymin_var <- input$ylim_min_var
+      ymax_var <- input$ylim_max_var
+      ylim_vals_var <- if (!is.na(ymin_var) && !is.na(ymax_var)) c(ymin_var, ymax_var) else NULL
+
+      args1 <- list(
+        x = runcdda_var(),
+        stat = input$stat_var
+      )
+      if (!is.null(ylim_vals_var)) args1$ylim_var <- ylim_vals_var
+
+      cdda_var_plot <- function() {
+        do.call(plot, args1)
+      }
+
+      req(runcdda_ind())
+      ymin_ind <- input$ylim_min_ind
+      ymax_ind <- input$ylim_max_ind
+      ylim_vals_ind <- if (!is.na(ymin_ind) && !is.na(ymax_ind)) c(ymin_ind, ymax_ind) else NULL
+
+      args2 <- list(
+        x = runcdda_ind(),
+        stat = input$stat_ind
+      )
+      if (!is.null(ylim_vals_ind)) args2$ylim_ind <- ylim_vals_ind
+
+      cdda_ind_plot <- function() {
+        do.call(plot, args2)
+      }
+ # <----- why does not show up????????
+    # cdda_var_summary <- summary(runcdda_var(),
+    #                             skew = input$skew,
+    #                             coskew = input$coskew,
+    #                             kurt = input$kurt,
+    #                             cokurt = input$cokurt)
+
+    # cdda_ind_summary <- summary(runcdda_ind(),
+    #                             hsic = input$hsic,
+    #                             dcor = input$dcor,
+    #                             hsic.diff = input$hsic.diff,
+    #                             dcor.diff = input$dcor.diff,
+     #                           mi.diff = input$mi.diff)
+
       out <- render("CDDA_Report.Rmd",
         output_format = pdf_document(),
         params = list(
           runcdda_var = runcdda_var(),
-          runcdda_ind = runcdda_ind()
+          cdda_var_plot = cdda_var_plot,
+          cdda_var_summary = cdda_var_summary,
+          runcdda_ind = runcdda_ind(),
+          cdda_ind_plot = cdda_ind_plot,
+          cdda_ind_summary = cdda_ind_summary
         ),
         envir = new.env(parent = globalenv())
       )
@@ -848,7 +1064,7 @@ shinyApp(ui = ui, server = server)
 
 # 1.show more descriptive statistics
 # 2.diagnosis of DDA
-# 3.Add plots of CDDA
+# 3.download button - working on it. 
 
 # Problem 1
 # When I use the bootstrap type as bca, the number of bootstrap samples has to be what number?
@@ -866,3 +1082,4 @@ shinyApp(ui = ui, server = server)
 
 # nlfun
 # A logical value indicating whether non-linear correlation tests should be returned when using summary, default is FALSE.
+# it can be a logical value can be input.

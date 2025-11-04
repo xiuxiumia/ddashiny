@@ -4,7 +4,11 @@ output:
   pdf_document: default
 params:
   runcdda_var: NULL
+  cdda_var_plot: NULL
+  cdda_var_summary: NULL
   runcdda_ind: NULL
+  cdda_ind_plot: NULL 
+  cdda_ind_summary: NULL
 ---
 
 # Variable Distribution
@@ -12,7 +16,29 @@ params:
 params$runcdda_var
 ```
 
+# Plot 
+```{r echo = FALSE}
+params$cdda_var_plot() 
+```
+
+# Summary
+```{r echo = FALSE}
+print(params$cdda_var_summary)
+```
+
 # Independenve Properties 
 ```{r cecho = FALSE}
 params$runcdda_ind
+```
+
+
+# Plot 
+```{r echo = FALSE}
+params$cdda_ind_plot() 
+```
+
+
+# Summary
+```{r echo = FALSE}
+print(params$cdda_ind_summary)
 ```
