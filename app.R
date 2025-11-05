@@ -1,8 +1,4 @@
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# DDA Shiny App: DDA Skewness Visualization
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-# 1. Load the App ----
+# 1. ---- Load the Packages ----
 library(shiny)
 library(DT)
 library(ggplot2)
@@ -13,17 +9,14 @@ library(shinyjs)
 library(rmarkdown)
 
 # 2. --- User Interface (UI) ----
-# Define UI for application
 ui <- navbarPage(
-  # Set up the title
+  # Set up the title for the app
   title = "Direction Dependence Analysis (DDA)",
 
-  # First tab - Upload Data
+  # First tab - Upload and Read Data
   tabPanel(
-    # Title
-    title = "Upload Data",
-    # Side Bar
-    sidebarLayout(
+    title = "Upload Data", # Title for first tab
+    sidebarLayout( # Side bar for first tab
       sidebarPanel(
         fileInput(
           inputId = "document",
@@ -34,8 +27,7 @@ ui <- navbarPage(
           placeholder = "No file selected"
         )
       ),
-      # Main Panel
-      mainPanel(
+      mainPanel( # Main Panel for first tab
         conditionalPanel(
           condition = "output.showMain1 == true",
           h2("Preview of Uploaded Data"),
@@ -45,44 +37,40 @@ ui <- navbarPage(
     )
   ),
 
-  # Second tab - Descriptive Statistics
+  # Second tab - Descriptive Statistics and Visualization
   tabPanel(
-    # Title
-    title = "Descriptive Statistics",
-    # Side Bar
-    sidebarLayout(
+    title = "Descriptive Statistics", # Title for first tab
+    sidebarLayout( # Side bar for second tab
       sidebarPanel(
-        selectInput(
+        selectInput( # Select input cause
           inputId = "cause",
           label = "Select Cause",
           choices = NULL,
           multiple = FALSE
         ),
-        selectInput(
+        selectInput( # Select input effect
           inputId = "effect",
           label = "Select Effect",
           choices = NULL,
           multiple = FALSE
         )
       ),
-      # Main Panel
-      mainPanel(tabsetPanel(
-        tabPanel(title = "Summary Tables", dataTableOutput("descTable_mainvars")),
-        tabPanel(title = "Visualiazation", plotOutput("hist"))
-      ))
+      mainPanel( # Main Panel for second tab
+        tabsetPanel(
+          tabPanel(title = "Summary Tables", dataTableOutput("descTable_mainvars")),
+          tabPanel(title = "Visualiazation", plotOutput("hist"))
+        )
+      )
     )
   ),
 
-  # Third tab - DDA
+  # Third tab - Run DDA
   tabPanel(
-    # Title
-    title = "DDA Summary",
-    # For rmd
-    useShinyjs(),
-    # Side Bar
-    sidebarLayout(
+    title = "DDA Summary", # Title for third tab
+    useShinyjs(), # To run .Rmd file
+    sidebarLayout( # Side bar for third tab
       sidebarPanel(
-        h2("Select Covariates"),
+        h2("Select Covariates"), # Select covariates section
         selectInput(
           inputId = "Covar_n_dda",
           label = "Select Numerical Covariates",
@@ -96,7 +84,7 @@ ui <- navbarPage(
           multiple = TRUE
         ),
         br(),
-        h2("DDA - Variables"),
+        h2("DDA - Variables"), # DDA variables conditions
         numericInput(
           inputId = "BootN_v_dda",
           label = "Number of Bootstrap Samples",
@@ -116,7 +104,7 @@ ui <- navbarPage(
           max = 1
         ),
         br(),
-        h2("DDA - Residuals"),
+        h2("DDA - Residuals"), # DDA residuals conditions
         numericInput(
           inputId = "BootN_r_dda",
           label = "Number of Bootstrap Samples",
@@ -142,7 +130,7 @@ ui <- navbarPage(
           selected = "TRUE"
         ),
         br(),
-        h2("DDA - Independence"),
+        h2("DDA - Independence"), # DDA independence conditions
         numericInput(
           inputId = "NlFun_i_dda",
           label = "Values Used for Power Transformation",
@@ -196,36 +184,34 @@ ui <- navbarPage(
           max = 1
         ),
         br(),
-        downloadButton("downloadReport1", "Export Report", icon = shiny::icon("file-pdf"))
+        downloadButton("downloadReport1", "Export Report", icon = shiny::icon("file-pdf")) # Download DDA Report
       ),
-
-      # Main Panel
-      mainPanel(tabsetPanel(
-        tabPanel(title = "Variables", verbatimTextOutput("dda_var")),
-        tabPanel(title = "Residuals", verbatimTextOutput("dda_res")),
-        tabPanel(title = "Independence", verbatimTextOutput("dda_ind"))
-      ))
+      mainPanel( # Main Panel for third tab
+        tabsetPanel(
+          tabPanel(title = "Variables", verbatimTextOutput("dda_var")),
+          tabPanel(title = "Residuals", verbatimTextOutput("dda_res")),
+          tabPanel(title = "Independence", verbatimTextOutput("dda_ind"))
+        )
+      )
     )
   ),
 
-  # Fouth tab - CDDA
+  # Fouth tab - Run CDDA
   tabPanel(
-    # Title
-    title = "CDDA Summary",
-    # For rmd
-    useShinyjs(),
-    # Side Bar
-    sidebarLayout(
+    title = "CDDA Summary", # Title for fourth tab
+    useShinyjs(), # To run .Rmd file
+    sidebarLayout( # Side bar for fourth tab
       sidebarPanel(
-        h2("Select Moderator"),
+        h2("Select Moderator"), # Select moderator section
         selectInput(
           inputId = "mod_cdda",
           label = "",
           choices = NULL,
           multiple = FALSE
         ),
+        checkboxInput(inputId = "Cat_Mod", label = "Categorical Moderator", value = FALSE), # Select categorical moderator
         br(),
-        h2("Select Covariates"),
+        h2("Select Covariates"), # Select covariates section
         selectInput(
           inputId = "Covar_n_cdda",
           label = "Select Numerical Covariates",
@@ -239,12 +225,27 @@ ui <- navbarPage(
           multiple = TRUE
         ),
         br(),
-        h2("CDDA - Variables"),
-        textInput(
-          inputId = "Modval_v_cdda",
-          label = "Methods to Specify the Moderator Value",
-          value = "mean",
-          placeholder = NULL
+        h2("CDDA - Variables"), # CDDA variables conditions
+        radioButtons( # --- Select Type of Moderator Value ---
+          "Modval_v_cdda", "Select Type of Moderator Value:",
+          choices = c("Preset" = "preset", "Custom Numeric" = "custom"),
+          selected = "preset"
+        ),
+        conditionalPanel( # --- Select Type of Moderator Value: UI for preset character options
+          condition = "input.Modval_v_cdda == 'preset'",
+          selectInput(
+            "modval_preset_v", "Moderator Value Preset Options",
+            choices = c("mean", "median", "JN"),
+            selected = "mean"
+          )
+        ),
+        conditionalPanel( # --- Select Type of Moderator Value: UI for custom numeric sequence
+          condition = "input.Modval_v_cdda == 'custom'",
+          textInput(
+            "modval_custom_v",
+            "Enter Numeric Values",
+            value = "c(-1, 1)"
+          )
         ),
         numericInput(
           inputId = "BootN_v_cdda",
@@ -265,12 +266,27 @@ ui <- navbarPage(
           max = 1
         ),
         br(),
-        h2("CDDA - Independence"),
-        textInput(
-          inputId = "Modval_i_cdda",
-          label = "Methods to Specify the Moderator Value",
-          value = "mean",
-          placeholder = NULL
+        h2("CDDA - Independence"), # CDDA independence conditions
+        radioButtons( # --- Select Type of Moderator Value ---
+          "Modval_i_cdda", "Select Type of Moderator Value",
+          choices = c("Preset" = "preset", "Custom Numeric" = "custom"),
+          selected = "preset"
+        ),
+        conditionalPanel( # --- Select Type of Moderator Value: UI for preset character options
+          condition = "input.Modval_i_cdda == 'preset'",
+          selectInput(
+            "modval_preset_i", "Moderator Value Preset Options",
+            choices = c("mean", "median", "JN"),
+            selected = "mean"
+          )
+        ),
+        conditionalPanel( # --- Select Type of Moderator Value: UI for custom numeric sequence
+          condition = "input.Modval_i_cdda == 'custom'",
+          textInput(
+            "modval_custom_i",
+            "Enter Numeric Values",
+            value = "c(-1, 1)"
+          )
         ),
         selectInput(
           inputId = "Hetero_i_cdda",
@@ -282,7 +298,7 @@ ui <- navbarPage(
           inputId = "DiffTest_i_cdda",
           label = "Differences Tests",
           choices = c("TRUE", "FALSE"),
-          selected = "TRUE" # <------ change to FALSE
+          selected = "FALSE"
         ),
         selectInput(
           inputId = "Paral_i_cdda",
@@ -309,7 +325,7 @@ ui <- navbarPage(
         numericInput(
           inputId = "BootN_i_cdda",
           label = "Number of Bootstrap Samples",
-          value = 2 # <--- change to 200
+          value = 200
         ),
         selectInput(
           inputId = "BootType_i_cdda",
@@ -325,11 +341,9 @@ ui <- navbarPage(
           max = 1
         ),
         br(),
-        downloadButton("downloadReport2", "Export Report", icon = shiny::icon("file-pdf"))
+        downloadButton("downloadReport2", "Export Report", icon = shiny::icon("file-pdf")) # Download CDDA Report
       ),
-
-      # Main Panel
-      mainPanel(
+      mainPanel( # Main Panel for fourth tab
         tabsetPanel(
           tabPanel(
             title = "Variables",
@@ -343,7 +357,7 @@ ui <- navbarPage(
             title = "Independence",
             verbatimTextOutput("cdda_ind"),
             uiOutput("plotControls2"),
-            conditionalPanel(
+            conditionalPanel( # Only diff test = true, the plots show
               condition = "input.DiffTest_i_cdda == 'TRUE'",
               plotOutput("cdda_ind_plot")
             ),
@@ -356,253 +370,31 @@ ui <- navbarPage(
   )
 )
 
-# Define server logic
+# 3. --- Define Server Logic ----
 server <- function(input, output, session) {
-  # --- Reactive: read uploaded data ---
+  # --- First Tab - Upload and Read Data  ----
+
+  # --- Reactive: Uploaded and Read Data
   data <- reactive({
     req(input$document)
     read.csv(input$document$datapath)
   })
 
-  # Conditional output
+  # --- Reactive: Conditional Output
   output$showMain1 <- reactive({
     !is.null(input$document)
   })
   outputOptions(output, "showMain1", suspendWhenHidden = FALSE)
 
+  # --- renderDT: Show Data
   output$tablePreview <- renderDT({
     req(data())
     datatable(head(data(), 10))
   })
 
+  # --- Second Tab - Descriptive Statistics and Visualization ----
 
-  # --- Select variables and show descriptive statistics and visualization ---
-  observe({
-    req(data())
-    updateSelectInput(
-      session,
-      inputId = "cause",
-      choices = names(data()),
-      selected = ""
-    )
-    updateSelectInput(
-      session,
-      inputId = "effect",
-      choices = names(data()),
-      selected = ""
-    )
-    updateSelectInput(
-      session,
-      inputId = "Covar_n_dda",
-      choices = names(data()),
-      selected = ""
-    )
-    updateSelectInput(
-      session,
-      inputId = "Covar_c_dda",
-      choices = names(data()),
-      selected = ""
-    )
-
-    updateSelectInput(
-      session,
-      inputId = "mod_cdda",
-      choices = names(data()),
-      selected = ""
-    )
-
-    updateSelectInput(
-      session,
-      inputId = "Covar_n_cdda",
-      choices = names(data()),
-      selected = ""
-    )
-
-    updateSelectInput(
-      session,
-      inputId = "Covar_c_cdda",
-      choices = names(data()),
-      selected = ""
-    )
-  })
-
-  observeEvent(list(input$HsicMethod_i_dda, input$DiffTest_i_dda, input$BootType_i_dda, input$CI_i_dda), {
-    if (input$HsicMethod_i_dda %in% c("boot", "permutation") || input$DiffTest_i_dda == "TRUE") {
-      shinyjs::show("BootN_i_dda") # make selectable
-      updateNumericInput(session, "BootN_i_dda", value = 100)
-
-      shinyjs::show("BootType_i_dda") # greyed out, unclickable
-      updateSelectInput(session, "BootType_i_dda", selected = "perc")
-
-      shinyjs::show("CI_i_dda") # greyed out, unclickable
-      updateNumericInput(session, "CI_i_dda", value = "0.95")
-    } else {
-      shinyjs::hide("BootN_i_dda") # greyed out, unclickable
-      updateNumericInput(session, "BootN_i_dda", value = NULL)
-
-      shinyjs::hide("BootType_i_dda") # greyed out, unclickable
-      updateSelectInput(session, "BootType_i_dda", selected = NULL)
-
-      shinyjs::hide("CI_i_dda") # greyed out, unclickable
-      updateNumericInput(session, "CI_i_dda", value = NULL)
-    }
-  })
-
-  observeEvent(input$DiffTest_i_dda, {
-    if (input$DiffTest_i_dda == "TRUE") {
-      shinyjs::show("Paral_i_dda") # make selectable
-    } else {
-      shinyjs::hide("Paral_i_dda") # greyed out, unclickable
-      updateSelectInput(session, "Paral_i_dda", selected = "FALSE")
-
-      shinyjs::hide("CoresN_i_dda")
-      updateNumericInput(session, "CoresN_i_dda", value = 1)
-    }
-  })
-
-  observeEvent(input$Paral_i_dda, {
-    if (input$Paral_i_dda == "TRUE") {
-      shinyjs::show("CoresN_i_dda")
-    } else {
-      shinyjs::hide("CoresN_i_dda")
-      updateNumericInput(session, "CoresN_i_dda", value = 1)
-    }
-  })
-
-  observeEvent(list(input$HsicMethod_i_cdda, input$DiffTest_i_cdda, input$BootType_i_cdda, input$CI_i_cdda), {
-    if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
-      shinyjs::show("BootN_i_cdda") # make selectable
-      updateNumericInput(session, "BootN_i_cdda", value = 2)
-
-      shinyjs::show("BootType_i_cdda") # greyed out, unclickable
-      updateSelectInput(session, "BootType_i_cdda", selected = "perc")
-
-      shinyjs::show("CI_i_cdda") # greyed out, unclickable
-      updateNumericInput(session, "CI_i_cdda", value = "0.95")
-    } else {
-      shinyjs::hide("BootN_i_cdda") # greyed out, unclickable
-      updateNumericInput(session, "BootN_i_cdda", value = NULL)
-
-      shinyjs::hide("BootType_i_cdda") # greyed out, unclickable
-      updateSelectInput(session, "BootType_i_cdda", selected = NULL)
-
-      shinyjs::hide("CI_i_cdda") # greyed out, unclickable
-      updateNumericInput(session, "CI_i_cdda", value = NULL)
-    }
-  })
-
-  observeEvent(input$Paral_i_cdda, {
-    if (input$Paral_i_cdda == "TRUE") {
-      shinyjs::show("CoresN_i_cdda")
-    } else {
-      shinyjs::hide("CoresN_i_cdda")
-      updateNumericInput(session, "CoresN_i_cdda", value = 1)
-    }
-  })
-
-  observeEvent(input$DiffTest_i_cdda, {
-    if (input$DiffTest_i_cdda == "TRUE") {
-      shinyjs::show("plotControls2")
-    } else {
-      shinyjs::hide("plotControls2")
-    }
-  })
-
-  output$plotControls1 <- renderUI({
-    req(runcdda_var())
-    fluidRow(
-      br(),
-      h2("Plot Options"),
-      column(
-        3,
-        selectInput(
-          inputId = "stat_var",
-          label = "Statistics",
-          choices = c("coskew", "cokurt", "rhs", "rcc", "rtanh"),
-          selected = "rhs"
-        )
-      ),
-      column(
-        6,
-        splitLayout(
-          cellWidths = c("50%", "50%"),
-          numericInput("ylim_min_var", "Y-axis min", value = NA, step = 1),
-          numericInput("ylim_max_var", "Y-axis max", value = NA, step = 1)
-        )
-      )
-    )
-  })
-
-  output$summaryControls1 <- renderUI({
-    req(runcdda_var()) # wait until the plot data is ready
-    fluidRow(
-      br(),
-      h2("Summary Options"),
-      column(
-        3,
-        selectInput("skew", "Skewness", choices = c("TRUE", "FALSE"), selected = "TRUE")
-      ),
-      column(
-        3,
-        selectInput("coskew", "Co-Skewness", choices = c("TRUE", "FALSE"), selected = "FALSE")
-      ),
-      column(
-        3,
-        selectInput("kurt", "Kurtosis", choices = c("TRUE", "FALSE"), selected = "TRUE")
-      ),
-      column(
-        3,
-        selectInput("cokurt", "Co-Kurtosis", choices = c("TRUE", "FALSE"), selected = "FALSE")
-      )
-    )
-  })
-
-  output$plotControls2 <- renderUI({
-    req(runcdda_ind()) # wait until the plot data is ready
-    fluidRow(
-      br(),
-      h2("Plot Options"),
-      column(
-        3,
-        selectInput(
-          inputId = "stat_ind",
-          label = "Statistics",
-          choices = c("hsic.diff", "dcor.diff", "mi.diff"),
-          selected = "hsic.diff"
-        )
-      ),
-      column(
-        6,
-        splitLayout(
-          cellWidths = c("50%", "50%"),
-          numericInput("ylim_min_ind", "Y-axis min", value = NA, step = 1),
-          numericInput("ylim_max_ind", "Y-axis max", value = NA, step = 1)
-        )
-      )
-    )
-  })
-
-  output$summaryControls2 <- renderUI({
-    req(runcdda_ind())
-    fluidRow(
-      br(),
-      h2("Summary Options"),
-      column(
-        6,
-        selectInput("hsic", "HSIC", choices = c("TRUE", "FALSE"), selected = "TRUE"),
-        selectInput("dcor", "Distance Correlation", choices = c("TRUE", "FALSE"), selected = "TRUE")
-      ),
-      column(
-        6,
-        selectInput("hsic.diff", "HSIC Difference", choices = c("TRUE", "FALSE"), selected = "FALSE"),
-        selectInput("dcor.diff", "Distance Correlation Difference", choices = c("TRUE", "FALSE"), selected = "FALSE"),
-        selectInput("mi.diff", "Mutual Information Difference", choices = c("TRUE", "FALSE"), selected = "FALSE")
-      )
-    )
-  })
-
-
-  # Output: summary tables
+  # --- renderDataTable: Summary Statistics Table
   output$descTable_mainvars <- renderDataTable({
     req(data(), input$cause, input$effect)
     selected_data <- data()[, c(input$cause, input$effect), drop = FALSE]
@@ -618,7 +410,7 @@ server <- function(input, output, session) {
     desc_out
   })
 
-  # Output: visualization
+  # --- renderPlot: Visualization
   output$hist <- renderPlot({
     req(data(), input$cause, input$effect)
 
@@ -674,70 +466,213 @@ server <- function(input, output, session) {
     grid.arrange(p1, p2, ncol = 2)
   })
 
-  # --- DDA ---
-  # Variables
+  # --- Third Tab - Run DDA ----
+
+  # --- Observe: Select Variables
+  observe({
+    req(data())
+
+    # 1. Collect all chosen variables
+    chosen_vars <- c(
+      input$cause,
+      input$effect,
+      input$Covar_n_dda,
+      input$Covar_c_dda
+    )
+    chosen_vars <- chosen_vars[chosen_vars != ""] # remove blanks
+    chosen_vars <- chosen_vars[!is.null(chosen_vars)]
+
+    # 2. Get all variable names from dataset
+    all_vars <- names(data())
+
+    # 3. Update one selectInput with remaining variables
+    updateChoices <- function(id, current_selection) {
+      remaining <- setdiff(all_vars, setdiff(chosen_vars, current_selection))
+      updateSelectInput(
+        session,
+        inputId = id,
+        choices = remaining,
+        selected = current_selection
+      )
+    }
+
+    # 4. Update all dropdowns
+    updateChoices("cause", input$cause)
+    updateChoices("effect", input$effect)
+    updateChoices("Covar_n_dda", input$Covar_n_dda)
+    updateChoices("Covar_c_dda", input$Covar_c_dda)
+  })
+
+  # --- ObserveEvent: Show/Hide Conditions
+  observeEvent(list(
+    input$HsicMethod_i_dda,
+    input$DiffTest_i_dda,
+    input$BootType_i_dda,
+    input$CI_i_dda
+  ), {
+    if (input$HsicMethod_i_dda %in% c("boot", "permutation") || input$DiffTest_i_dda == "TRUE") {
+      shinyjs::show("BootN_i_dda") # Make selectable
+      updateNumericInput(session, "BootN_i_dda", value = 100)
+
+      shinyjs::show("BootType_i_dda") # Make selectable
+      updateSelectInput(session, "BootType_i_dda", selected = "perc")
+
+      shinyjs::show("CI_i_dda") # Make selectable
+      updateNumericInput(session, "CI_i_dda", value = "0.95")
+    } else {
+      shinyjs::hide("BootN_i_dda") # Make unclickable
+      updateNumericInput(session, "BootN_i_dda", value = NULL)
+
+      shinyjs::hide("BootType_i_dda") # Make unclickable
+      updateSelectInput(session, "BootType_i_dda", selected = NULL)
+
+      shinyjs::hide("CI_i_dda") # Make unclickable
+      updateNumericInput(session, "CI_i_dda", value = NULL)
+    }
+  })
+
+  observeEvent(input$DiffTest_i_dda, {
+    if (input$DiffTest_i_dda == "TRUE") {
+      shinyjs::show("Paral_i_dda") # Make selectable
+    } else {
+      shinyjs::hide("Paral_i_dda") # Make unclickable
+      updateSelectInput(session, "Paral_i_dda", selected = "FALSE")
+
+      shinyjs::hide("CoresN_i_dda") # Make unclickable
+      updateNumericInput(session, "CoresN_i_dda", value = 1)
+    }
+  })
+
+  observeEvent(input$Paral_i_dda, {
+    if (input$Paral_i_dda == "TRUE") {
+      shinyjs::show("CoresN_i_dda") # Make selectable
+    } else {
+      shinyjs::hide("CoresN_i_dda") # Make unclickable
+      updateNumericInput(session, "CoresN_i_dda", value = 1)
+    }
+  })
+
+  # --- Reactive: Run DDA - Variables
   rundda_var <- reactive({
     req(data(), input$cause, input$effect)
 
-    formula_str <- paste(input$effect, "~", input$cause)
+    # --- Prepare Formula ----
+    # 1. Combine numeric covariates if not NULL
+    if (!is.null(input$Covar_n_dda) && length(input$Covar_n_dda) > 0) {
+      covar_num <- paste(input$Covar_n_dda, collapse = " + ")
+    } else {
+      covar_num <- NULL
+    }
+
+    # 2. Combine categorical covariates if not NULL
+    if (!is.null(input$Covar_c_dda) && length(input$Covar_c_dda) > 0) {
+      covar_cat <- paste(input$Covar_c_dda, collapse = " + ")
+      formatted_vars <- paste('"', input$Covar_c_dda, '"', collapse = ", ")
+    } else {
+      covar_cat <- NULL
+      formatted_vars <- NULL
+    }
+
+    # 3. Combine numeric and categorical covariates if not NULL
+    covars <- paste(c(covar_num, covar_cat), collapse = " + ")
+
+    covars <- if (is.null(covars)) {
+      NULL
+    } else {
+      covars
+    }
+
+    # 4. Form fomula
+    if (is.null(input$Covar_c_dda) && is.null(input$Covar_n_dda)) {
+      formula_str <- paste(input$effect, "~", input$cause)
+    } else {
+      formula_str <- paste(input$effect, "~", paste(input$cause, "+", covars))
+    }
+
     formula <- as.formula(formula_str)
 
+    # --- Change Categorical Covariates to Factors ----
+    if (!is.null(input$Covar_c_dda) && length(input$Covar_c_dda) > 0) {
+      df <- data()
+
+      for (v in input$Covar_c_dda) {
+        if (v %in% names(df)) {
+          df[[v]] <- as.factor(df[[v]])
+        }
+      }
+    } else {
+      df <- data()
+    }
+
+    # --- DDA Variables Condition ----
     out_var <- dda.vardist(
       formula,
       pred = input$cause,
       B = input$BootN_v_dda,
       boot.type = input$BootType_v_dda,
       conf.level = input$CI_v_dda,
-      data = data()
+      data = df
     )
     return(out_var)
   })
 
+  # --- renderPrint: Show DDA - Variables Output
   output$dda_var <- renderPrint({
     req(rundda_var())
     print(rundda_var())
   })
 
-  # Residuals
+  # --- Reactive: Run DDA - Residuals
   rundda_res <- reactive({
     req(data(), input$cause, input$effect)
 
-    # # Construct formula
-    # # ## Combine numeric covariates if not NULL
-    # covar_num <- if (!is.null(input$covar_n) &&
-    #   length(input$covar_n) > 0) {
-    #   paste(input$covar_n, collapse = " + ")
-    # } else {
-    #   NULL
-    # }
+    # --- Prepare Formula ----
+    # 1. Combine numeric covariates if not NULL
+    if (!is.null(input$Covar_n_dda) && length(input$Covar_n_dda) > 0) {
+      covar_num <- paste(input$Covar_n_dda, collapse = " + ")
+    } else {
+      covar_num <- NULL
+    }
 
-    # # ## Combine categorical covariates if not NULL
-    # covar_cat <- if (!is.null(input$covar_c) &&
-    #   length(input$covar_c) > 0) {
-    #   paste(input$covar_c, collapse = " + ")
-    # } else {
-    #   NULL
-    # }
+    # 2. Combine categorical covariates if not NULL
+    if (!is.null(input$Covar_c_dda) && length(input$Covar_c_dda) > 0) {
+      covar_cat <- paste(input$Covar_c_dda, collapse = " + ")
+    } else {
+      covar_cat <- NULL
+    }
 
-    # # ## Combine both covariates
-    # covars <- paste(c(covar_num, covar_cat), collapse = " + ")
+    # 3. Combine numeric and categorical covariates if not NULL
+    covars <- paste(c(covar_num, covar_cat), collapse = " + ")
 
-    # covars <- if (covars == "") {
-    #   NULL
-    # } else {
-    #   covars
-    # }
+    covars <- if (is.null(covars)) {
+      NULL
+    } else {
+      covars
+    }
 
-    # ## Construct the formula string
-    # formula_str <- if (is.null(covars)) {
-    #   paste(input$effect, "~", input$cause)
-    # } else {
-    #   paste(input$effect, "~", input$cause, "+", covars)
-    # }
+    # 4. Form fomula
+    if (is.null(input$Covar_c_dda) && is.null(input$Covar_n_dda)) {
+      formula_str <- paste(input$effect, "~", input$cause)
+    } else {
+      formula_str <- paste(input$effect, "~", paste(input$cause, "+", covars))
+    }
 
-    formula_str <- paste(input$effect, "~", input$cause)
     formula <- as.formula(formula_str)
 
+    # --- Change Categorical Covariates to Factors ----
+    if (!is.null(input$Covar_c_dda) && length(input$Covar_c_dda) > 0) {
+      df <- data()
+
+      for (v in input$Covar_c_dda) {
+        if (v %in% names(df)) {
+          df[[v]] <- as.factor(df[[v]])
+        }
+      }
+    } else {
+      df <- data()
+    }
+
+    # --- DDA Residuals Condition ----
     out_res <- dda.resdist(
       formula,
       pred = input$cause,
@@ -745,57 +680,69 @@ server <- function(input, output, session) {
       boot.type = input$BootType_r_dda,
       conf.level = input$CI_r_dda,
       prob.trans = paste0('"', input$ProbTrans_r_dda, "'"),
-      data = data()
+      data = df
     )
 
     return(out_res)
   })
 
+  # --- renderPrint: Show DDA - Residuals Output
   output$dda_res <- renderPrint({
     req(rundda_res())
     print(rundda_res())
   })
 
+  # --- Reactive: Run DDA - Independence
   rundda_ind <- reactive({
     req(data(), input$cause, input$effect)
 
-    # # Construct formula
-    # # ## Combine numeric covariates if not NULL
-    # covar_num <- if (!is.null(input$covar_n) &&
-    #   length(input$covar_n) > 0) {
-    #   paste(input$covar_n, collapse = " + ")
-    # } else {
-    #   NULL
-    # }
+    # --- Prepare Formula ----
+    # 1. Combine numeric covariates if not NULL
+    if (!is.null(input$Covar_n_dda) && length(input$Covar_n_dda) > 0) {
+      covar_num <- paste(input$Covar_n_dda, collapse = " + ")
+    } else {
+      covar_num <- NULL
+    }
 
-    # # ## Combine categorical covariates if not NULL
-    # covar_cat <- if (!is.null(input$covar_c) &&
-    #   length(input$covar_c) > 0) {
-    #   paste(input$covar_c, collapse = " + ")
-    # } else {
-    #   NULL
-    # }
+    # 2. Combine categorical covariates if not NULL
+    if (!is.null(input$Covar_c_dda) && length(input$Covar_c_dda) > 0) {
+      covar_cat <- paste(input$Covar_c_dda, collapse = " + ")
+    } else {
+      covar_cat <- NULL
+    }
 
-    # # ## Combine both covariates
-    # covars <- paste(c(covar_num, covar_cat), collapse = " + ")
+    # 3. Combine numeric and categorical covariates if not NULL
+    covars <- paste(c(covar_num, covar_cat), collapse = " + ")
 
-    # covars <- if (covars == "") {
-    #   NULL
-    # } else {
-    #   covars
-    # }
+    covars <- if (is.null(covars)) {
+      NULL
+    } else {
+      covars
+    }
 
-    # ## Construct the formula string
-    # formula_str <- if (is.null(covars)) {
-    #   paste(input$effect, "~", input$cause)
-    # } else {
-    #   paste(input$effect, "~", input$cause, "+", covars)
-    # }
+    # 4. Form fomula
+    if (is.null(input$Covar_c_dda) && is.null(input$Covar_n_dda)) {
+      formula_str <- paste(input$effect, "~", input$cause)
+    } else {
+      formula_str <- paste(input$effect, "~", paste(input$cause, "+", covars))
+    }
 
-    formula_str <- paste(input$effect, "~", input$cause)
     formula <- as.formula(formula_str)
 
-    # build argument list
+    # --- Change Categorical Covariates to Factors ----
+    if (!is.null(input$Covar_c_dda) && length(input$Covar_c_dda) > 0) {
+      df <- data()
+
+      for (v in input$Covar_c_dda) {
+        if (v %in% names(df)) {
+          df[[v]] <- as.factor(df[[v]])
+        }
+      }
+    } else {
+      df <- data()
+    }
+
+    # --- DDA Independence Condition ----
     args <- list(
       formula = formula,
       pred = input$cause,
@@ -805,36 +752,33 @@ server <- function(input, output, session) {
       diff = input$DiffTest_i_dda,
       parallelize = ifelse(input$DiffTest_i_dda == "TRUE", input$Paral_i_dda == "TRUE", FALSE),
       cores = ifelse(input$Paral_i_dda == "FALSE", 0, input$CoresN_i_dda),
-      data = data()
+      data = df
     )
 
-    # Add optional arguments only if relevant
     if (input$HsicMethod_i_dda %in% c("boot", "permutation") || input$DiffTest_i_dda == "TRUE") {
       args$B <- input$BootN_i_dda
       args$boot.type <- input$BootType_i_dda
       args$conf.level <- input$CI_i_dda
     }
 
-    # Run the function
     out_ind <- do.call(dda.indep, args)
 
     return(out_ind)
   })
 
+  # --- renderPrint: Show DDA - Independent Output
   output$dda_ind <- renderPrint({
     req(rundda_ind())
     print(rundda_ind())
   })
 
-  ## Download report
+  # --- downloadHandler: Download report
   output$downloadReport1 <- downloadHandler(
     filename = "DDA Report.pdf",
     content = function(file) {
       src <- normalizePath("DDA_Report.Rmd")
 
-      # temporarily switch to the temp dir, in case you do not have write
-      # permission to the current working directory
-      owd <- setwd(tempdir())
+      owd <- setwd(tempdir()) # temporarily dir
       on.exit(setwd(owd))
       file.copy(src, "DDA_Report.Rmd", overwrite = TRUE)
 
@@ -852,37 +796,292 @@ server <- function(input, output, session) {
     }
   )
 
-  # --- CDDA ---
-  # Variables
+  # --- Fourth Tab - Run CDDA ----
+
+  # --- Observe: Select Variables
+  observe({
+    req(data())
+
+    # 1. Collect all chosen variables
+    chosen_vars <- c(
+      input$cause,
+      input$effect,
+      input$mod_cdda,
+      input$Covar_n_cdda,
+      input$Covar_c_cdda
+    )
+    chosen_vars <- chosen_vars[chosen_vars != ""] # remove blanks
+    chosen_vars <- chosen_vars[!is.null(chosen_vars)]
+
+    # 2. Get all variable names from dataset
+    all_vars <- names(data())
+
+    # 3. Update one selectInput with remaining variables
+    updateChoices <- function(id, current_selection) {
+      remaining <- setdiff(all_vars, setdiff(chosen_vars, current_selection))
+      updateSelectInput(
+        session,
+        inputId = id,
+        choices = remaining,
+        selected = current_selection
+      )
+    }
+
+    # 4. Update all dropdowns
+    updateChoices("cause", input$cause)
+    updateChoices("effect", input$effect)
+    updateChoices("mod_cdda", input$mod_cdda)
+    updateChoices("Covar_n_cdda", input$Covar_n_cdda)
+    updateChoices("Covar_c_cdda", input$Covar_c_cdda)
+  })
+
+  # --- ObserveEvent: Show/Hide Conditions
+  observeEvent(list(
+    input$HsicMethod_i_cdda,
+    input$DiffTest_i_cdda,
+    input$BootType_i_cdda,
+    input$CI_i_cdda
+  ), {
+    if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
+      shinyjs::show("BootN_i_cdda") # Make selectable
+      updateNumericInput(session, "BootN_i_cdda", value = 2)
+
+      shinyjs::show("BootType_i_cdda") # Make selectable
+      updateSelectInput(session, "BootType_i_cdda", selected = "perc")
+
+      shinyjs::show("CI_i_cdda") # Make selectable
+      updateNumericInput(session, "CI_i_cdda", value = "0.95")
+    } else {
+      shinyjs::hide("BootN_i_cdda") # Make unclickable
+      updateNumericInput(session, "BootN_i_cdda", value = NULL)
+
+      shinyjs::hide("BootType_i_cdda") # Make unclickable
+      updateSelectInput(session, "BootType_i_cdda", selected = NULL)
+
+      shinyjs::hide("CI_i_cdda") # Make unclickable
+      updateNumericInput(session, "CI_i_cdda", value = NULL)
+    }
+  })
+
+  observeEvent(input$DiffTest_i_cdda, {
+    if (input$DiffTest_i_cdda == "TRUE") {
+      shinyjs::show("Paral_i_cdda") # Make selectable
+    } else {
+      shinyjs::hide("Paral_i_cdda") # Make unclickable
+      updateSelectInput(session, "Paral_i_cdda", selected = "FALSE")
+
+      shinyjs::hide("CoresN_i_cdda") # Make unclickable
+      updateNumericInput(session, "CoresN_i_cdda", value = 1)
+    }
+  })
+
+  observeEvent(input$Paral_i_cdda, {
+    if (input$Paral_i_cdda == "TRUE") {
+      shinyjs::show("CoresN_i_cdda") # Make selectable
+    } else {
+      shinyjs::hide("CoresN_i_cdda") # Make unclickable
+      updateNumericInput(session, "CoresN_i_cdda", value = 1)
+    }
+  })
+
+  # --- ObserveEvent: Show/Hide Plots
+  observeEvent(input$DiffTest_i_cdda, {
+    if (input$DiffTest_i_cdda == "TRUE") {
+      shinyjs::show("plotControls2") # Show plots
+    } else {
+      shinyjs::hide("plotControls2") # Hide plots
+    }
+  })
+
+  # --- renderUI: Show Plots and Plot Conditions for CDDA - Variables
+  output$plotControls1 <- renderUI({
+    req(runcdda_var())
+    fluidRow(
+      br(),
+      h2("Plot Options"),
+      column(
+        3,
+        selectInput(
+          inputId = "stat_var",
+          label = "Statistics",
+          choices = c("coskew", "cokurt", "rhs", "rcc", "rtanh"),
+          selected = "rhs"
+        )
+      ),
+      column(
+        6,
+        splitLayout(
+          cellWidths = c("50%", "50%"),
+          numericInput("ylim_min_var", "Y-axis min", value = NA, step = 1),
+          numericInput("ylim_max_var", "Y-axis max", value = NA, step = 1)
+        )
+      )
+    )
+  })
+
+  # --- renderUI: Show Summary and Summary Conditions for CDDA - Variables
+  output$summaryControls1 <- renderUI({
+    req(runcdda_var())
+    fluidRow(
+      br(),
+      h2("Summary Options"),
+      column(
+        3,
+        selectInput("skew", "Skewness", choices = c("TRUE", "FALSE"), selected = "TRUE")
+      ),
+      column(
+        3,
+        selectInput("coskew", "Co-Skewness", choices = c("TRUE", "FALSE"), selected = "FALSE")
+      ),
+      column(
+        3,
+        selectInput("kurt", "Kurtosis", choices = c("TRUE", "FALSE"), selected = "TRUE")
+      ),
+      column(
+        3,
+        selectInput("cokurt", "Co-Kurtosis", choices = c("TRUE", "FALSE"), selected = "FALSE")
+      )
+    )
+  })
+
+  # --- renderUI: Show Plots and Plot Conditions for CDDA - Independence
+  output$plotControls2 <- renderUI({
+    req(runcdda_ind())
+    fluidRow(
+      br(),
+      h2("Plot Options"),
+      column(
+        3,
+        selectInput(
+          inputId = "stat_ind",
+          label = "Statistics",
+          choices = c("hsic.diff", "dcor.diff", "mi.diff"),
+          selected = "hsic.diff"
+        )
+      ),
+      column(
+        6,
+        splitLayout(
+          cellWidths = c("50%", "50%"),
+          numericInput("ylim_min_ind", "Y-axis min", value = NA, step = 1),
+          numericInput("ylim_max_ind", "Y-axis max", value = NA, step = 1)
+        )
+      )
+    )
+  })
+
+  # --- renderUI: Show Summary and Summary Conditions for CDDA - Independence
+  output$summaryControls2 <- renderUI({
+    req(runcdda_ind())
+    fluidRow(
+      br(),
+      h2("Summary Options"),
+      column(
+        6,
+        selectInput("hsic", "HSIC", choices = c("TRUE", "FALSE"), selected = "TRUE"),
+        selectInput("dcor", "Distance Correlation", choices = c("TRUE", "FALSE"), selected = "TRUE"),
+        selectInput("nlfun", "Non-linear Correlation", choices = c("TRUE", "FALSE"), selected = "FALSE")
+      ),
+      column(
+        6,
+        selectInput("hsic.diff", "HSIC Difference", choices = c("TRUE", "FALSE"), selected = "FALSE"),
+        selectInput("dcor.diff", "Distance Correlation Difference", choices = c("TRUE", "FALSE"), selected = "FALSE"),
+        selectInput("mi.diff", "Mutual Information Difference", choices = c("TRUE", "FALSE"), selected = "FALSE")
+      )
+    )
+  })
+
+  # --- Reactive: Run CDDA - Variables
   runcdda_var <- reactive({
     req(data(), input$cause, input$effect, input$mod_cdda)
+
+    # --- Prepare Formula ----
+    # 1. Combine numeric covariates if not NULL
+    if (!is.null(input$Covar_n_cdda) && length(input$Covar_n_cdda) > 0) {
+      covar_num <- paste(input$Covar_n_cdda, collapse = " + ")
+    } else {
+      covar_num <- NULL
+    }
+
+    # 2. Combine categorical covariates if not NULL
+    if (!is.null(input$Covar_c_cdda) && length(input$Covar_c_cdda) > 0) {
+      covar_cat <- paste(input$Covar_c_cdda, collapse = " + ")
+    } else {
+      covar_cat <- NULL
+    }
+
+    # 3. Combine numeric and categorical covariates if not NULL
+    covars <- paste(c(covar_num, covar_cat), collapse = " + ")
+
+    covars <- if (is.null(covars)) {
+      NULL
+    } else {
+      covars
+    }
+
+    # 4. Form fomula
+    if (is.null(input$Covar_c_cdda) && is.null(input$Covar_n_cdda)) {
+      formula_str <- paste(input$effect, "~", paste(input$cause, "*", input$mod_cdda))
+    } else {
+      formula_str <- paste(input$effect, "~", paste(paste(input$cause, "*", input$mod_cdda), "+", covars))
+    }
+
+    formula <- as.formula(formula_str)
+
+    # --- Change Categorical Covariates to Factors ----
+    if (!is.null(input$Covar_c_cdda) && length(input$Covar_c_cdda) > 0) {
+      df <- data()
+
+      for (v in input$Covar_c_cdda) {
+        if (v %in% names(df)) {
+          df[[v]] <- as.factor(df[[v]])
+        }
+      }
+    } else {
+      df <- data()
+    }
+
+    # --- CDDA Variables Condition ----
+
+    m <- lm(formula, data = df)
 
     pred <- input$cause
     mod <- input$mod_cdda
 
-    formula_str <- paste(input$effect, "~", paste(input$cause, "*", input$mod_cdda))
-    formula <- as.formula(formula_str)
+    if (input$Modval_v_cdda == "preset") {
+      modval <- input$modval_preset_v 
+    } else {
+      modval_text <- input$modval_custom_v
+      modval_split <- strsplit(modval_text, ",")[[1]]
+      modval <- suppressWarnings(as.numeric(trimws(modval_split)))
+      modval <- modval[!is.na(modval)]
 
-    m <- lm(formula, data = data())
+      if (length(modval) == 0) {
+        showNotification("Invalid numeric moderator values. Please enter comma-separated numbers.", type = "error")
+        return(NULL)
+      }
+    }
 
     out_var <- cdda.vardist(
-      m,
+      formula = m,
       pred = pred,
       mod = mod,
-      modval = input$Modval_v_cdda,
+      modval = modval,
       B = input$BootN_v_cdda,
       boot.type = input$BootType_v_cdda,
       conf.level = input$CI_v_cdda,
-      data = data()
+      data = df
     )
     return(out_var)
   })
 
+  # --- renderPrint: Show CDDA - Variables Output
   output$cdda_var <- renderPrint({
     req(runcdda_var())
     print(runcdda_var())
   })
 
+  # --- rendePlot: Show CDDA - Variables Plots
   output$cdda_var_plot <- renderPlot({
     req(runcdda_var())
     ymin <- input$ylim_min_var
@@ -897,6 +1096,7 @@ server <- function(input, output, session) {
     do.call(plot, args)
   })
 
+  # --- rendePrint: Show CDDA - Variables Summary
   output$cdda_var_summary <- renderPrint({
     req(runcdda_var())
     res <- summary(
@@ -909,33 +1109,90 @@ server <- function(input, output, session) {
     print(res)
   })
 
+  # --- Reactive: Run CDDA - Independence
   runcdda_ind <- reactive({
     req(data(), input$cause, input$effect, input$mod_cdda)
+    
+    # --- Prepare Formula ----
+    # 1. Combine numeric covariates if not NULL
+    if (!is.null(input$Covar_n_cdda) && length(input$Covar_n_cdda) > 0) {
+      covar_num <- paste(input$Covar_n_cdda, collapse = " + ")
+    } else {
+      covar_num <- NULL
+    }
 
+    # 2. Combine categorical covariates if not NULL
+    if (!is.null(input$Covar_c_cdda) && length(input$Covar_c_cdda) > 0) {
+      covar_cat <- paste(input$Covar_c_cdda, collapse = " + ")
+    } else {
+      covar_cat <- NULL
+    }
+
+    # 3. Combine numeric and categorical covariates if not NULL
+    covars <- paste(c(covar_num, covar_cat), collapse = " + ")
+
+    covars <- if (is.null(covars)) {
+      NULL
+    } else {
+      covars
+    }
+
+    # 4. Form fomula
+    if (is.null(input$Covar_c_cdda) && is.null(input$Covar_n_cdda)) {
+      formula_str <- paste(input$effect, "~", paste(input$cause, "*", input$mod_cdda))
+    } else {
+      formula_str <- paste(input$effect, "~", paste(paste(input$cause, "*", input$mod_cdda), "+", covars))
+    }
+
+    formula <- as.formula(formula_str)
+
+    # --- Change Categorical Covariates to Factors ----
+    if (!is.null(input$Covar_c_cdda) && length(input$Covar_c_cdda) > 0) {
+      df <- data()
+
+      for (v in input$Covar_c_cdda) {
+        if (v %in% names(df)) {
+          df[[v]] <- as.factor(df[[v]])
+        }
+      }
+    } else {
+      df <- data()
+    }
+
+    # --- CDDA Independence Condition ----
     pred <- input$cause
     mod <- input$mod_cdda
+    parallelize <- ifelse(input$DiffTest_i_cdda == "TRUE", FALSE, TRUE)
+    cores <- ifelse(input$Paral_i_cdda == "FALSE", 0, input$CoresN_i_cdda)
+    
+    if (input$Modval_i_cdda == "preset") {
+      modval <- input$modval_preset_i 
+    } else {
+      modval_text <- input$modval_custom_i
+      modval_split <- strsplit(modval_text, ",")[[1]]
+      modval <- suppressWarnings(as.numeric(trimws(modval_split)))
+      modval <- modval[!is.na(modval)]
 
-    B <- NULL
-    boot.type <- NULL
-    conf.level <- NULL
+      if (length(modval) == 0) {
+        showNotification("Invalid numeric moderator values. Please enter comma-separated numbers.", type = "error")
+        return(NULL)
+      }
+    }
 
+    B <- boot.type <- conf.level <-NULL
     if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
       B <- input$BootN_i_cdda
       boot.type <- input$BootType_i_cdda
       conf.level <- input$CI_i_cdda
     }
-    parallelize <- ifelse(input$DiffTest_i_cdda == "TRUE", FALSE, TRUE)
-    cores <- ifelse(input$Paral_i_cdda == "FALSE", 0, input$CoresN_i_cdda)
-    formula_str <- paste(input$effect, "~", paste(input$cause, "*", input$mod_cdda))
-    formula <- as.formula(formula_str)
 
-    m <- lm(formula, data = data())
+    m <- lm(formula, data = df)
 
     out_ind <- cdda.indep(
       formula = m,
       pred = pred,
       mod = mod,
-      modval = input$Modval_i_cdda,
+      modval = modval,
       hsic.method = input$HsicMethod_i_cdda,
       nlfun = input$NlFun_i_cdda,
       hetero = input$Hetero_i_cdda,
@@ -945,17 +1202,19 @@ server <- function(input, output, session) {
       conf.level = conf.level,
       parallelize = parallelize,
       cores = cores,
-      data = data()
+      data = df
     )
 
     return(out_ind)
   })
 
+  # --- renderPrint: Show CDDA - Independence Output
   output$cdda_ind <- renderPrint({
     req(runcdda_ind())
     print(runcdda_ind())
   })
 
+  # --- rendePlot: Show CDDA - Independence Plots
   output$cdda_ind_plot <- renderPlot({
     req(runcdda_ind())
 
@@ -971,6 +1230,7 @@ server <- function(input, output, session) {
     do.call(plot, args)
   })
 
+  # --- rendePrint: Show CDDA - Independence Summary
   output$cdda_ind_summary <- renderPrint({
     req(runcdda_ind())
     cdda_ind_res <- runcdda_ind()
@@ -978,6 +1238,7 @@ server <- function(input, output, session) {
       object = cdda_ind_res,
       hsic = input$hsic,
       dcor = input$dcor,
+      nlfun = input$nlfun,
       hsic.diff = input$hsic.diff,
       dcor.diff = input$dcor.diff,
       mi.diff = input$mi.diff
@@ -985,15 +1246,13 @@ server <- function(input, output, session) {
     print(res)
   })
 
-  ## Download report
+  # --- downloadHandler: Download report
   output$downloadReport2 <- downloadHandler(
     filename = "CDDA Report.pdf",
     content = function(file) {
       src <- normalizePath("CDDA_Report.Rmd")
 
-      # temporarily switch to the temp dir, in case you do not have write
-      # permission to the current working directory
-      owd <- setwd(tempdir())
+      owd <- setwd(tempdir())  # temporarily dir
       on.exit(setwd(owd))
       file.copy(src, "CDDA_Report.Rmd", overwrite = TRUE)
 
@@ -1026,19 +1285,32 @@ server <- function(input, output, session) {
       cdda_ind_plot <- function() {
         do.call(plot, args2)
       }
- # <----- why does not show up????????
-    # cdda_var_summary <- summary(runcdda_var(),
-    #                             skew = input$skew,
-    #                             coskew = input$coskew,
-    #                             kurt = input$kurt,
-    #                             cokurt = input$cokurt)
 
-    # cdda_ind_summary <- summary(runcdda_ind(),
-    #                             hsic = input$hsic,
-    #                             dcor = input$dcor,
-    #                             hsic.diff = input$hsic.diff,
-    #                             dcor.diff = input$dcor.diff,
-     #                           mi.diff = input$mi.diff)
+      cdda_var_args <- list(
+        object = runcdda_var(),
+        skew = input$skew,
+        coskew = input$coskew,
+        kurt = input$kurt,
+        cokurt = input$cokurt
+      )
+
+      cdda_var_summary <- function() {
+        do.call(summary, cdda_var_args)
+      }
+
+      cdda_ind_args <- list(
+        object = runcdda_ind(),
+        hsic = input$hsic,
+        dcor = input$dcor,
+        nlfun = input$nlfun,
+        hsic.diff = input$hsic.diff,
+        dcor.diff = input$dcor.diff,
+        mi.diff = input$mi.diff
+      )
+
+      cdda_ind_summary <- function() {
+        do.call(summary, cdda_ind_args)
+      }
 
       out <- render("CDDA_Report.Rmd",
         output_format = pdf_document(),
@@ -1064,7 +1336,8 @@ shinyApp(ui = ui, server = server)
 
 # 1.show more descriptive statistics
 # 2.diagnosis of DDA
-# 3.download button - working on it. 
+# 4.Make the report.Rmd neat!
+# 5. error massages in cdda : argument is of length zero
 
 # Problem 1
 # When I use the bootstrap type as bca, the number of bootstrap samples has to be what number?
@@ -1074,12 +1347,5 @@ shinyApp(ui = ui, server = server)
 # When I select boot for HSIC Inference method
 # Error: object 'critical_value' not found
 
-# Problem 3
-# Do i need to change variables to factors in both DDA and CDDA?
-
-# Problem 5
-# Modaval input? Do i need that?, what should i put, can the model run without it?
-
-# nlfun
-# A logical value indicating whether non-linear correlation tests should be returned when using summary, default is FALSE.
-# it can be a logical value can be input.
+# 1. Do you think a helptext would help with the moderate value type selection? What should put there?
+# 2. Check defalts of the conditons. If it is uncliable, what the value should be?

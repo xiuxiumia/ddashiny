@@ -23,11 +23,11 @@ params$cdda_var_plot()
 
 # Summary
 ```{r echo = FALSE}
-print(params$cdda_var_summary)
+params$cdda_var_summary()
 ```
 
 # Independenve Properties 
-```{r cecho = FALSE}
+```{r echo = FALSE}
 params$runcdda_ind
 ```
 
@@ -40,5 +40,5 @@ params$cdda_ind_plot()
 
 # Summary
 ```{r echo = FALSE}
-print(params$cdda_ind_summary)
+params$cdda_ind_summary()
 ```
