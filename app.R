@@ -7,6 +7,7 @@ library(dda)
 library(moments)
 library(shinyjs)
 library(rmarkdown)
+library(shinyBS)
 
 # 2. --- User Interface (UI) ----
 ui <- navbarPage(
@@ -85,10 +86,41 @@ ui <- navbarPage(
         ),
         br(),
         h2("DDA - Variables"), # DDA variables conditions
+        tags$div(
+          style = "display: flex; align-items: center; margin-bottom: 5px;",
+          tags$label(
+            "Number of Bootstrap Samples",
+            style = "margin: 0; font-weight: 600; font-size: 15px;"
+          ),
+          tags$span(
+            "?",
+            id = "help_boot1",
+            style = "
+      display: inline-block;
+      margin-left: 6px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: #007BFF;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+    "
+          )
+        ),
         numericInput(
-          inputId = "BootN_v_dda",
-          label = "Number of Bootstrap Samples",
-          value = 100
+          "BootN_v_dda",
+          label = NULL,
+          value = 200
+        ),
+        bsPopover(
+          id = "help_boot1",
+          title = NULL,
+          content = "The bootstrap sample size should be greater than 1.",
+          placement = "right",
+          trigger = "hover"
         ),
         selectInput(
           inputId = "BootType_v_dda",
@@ -105,10 +137,41 @@ ui <- navbarPage(
         ),
         br(),
         h2("DDA - Residuals"), # DDA residuals conditions
+        tags$div(
+          style = "display: flex; align-items: center; margin-bottom: 5px;",
+          tags$label(
+            "Number of Bootstrap Samples",
+            style = "margin: 0; font-weight: 600; font-size: 15px;"
+          ),
+          tags$span(
+            "?",
+            id = "help_boot2",
+            style = "
+      display: inline-block;
+      margin-left: 6px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: #007BFF;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+    "
+          )
+        ),
         numericInput(
-          inputId = "BootN_r_dda",
-          label = "Number of Bootstrap Samples",
-          value = 100
+          "BootN_r_dda",
+          label = NULL,
+          value = 200
+        ),
+        bsPopover(
+          id = "help_boot2",
+          title = NULL,
+          content = "The bootstrap sample size should be greater than 1.",
+          placement = "right",
+          trigger = "hover"
         ),
         selectInput(
           inputId = "BootType_r_dda",
@@ -127,20 +190,20 @@ ui <- navbarPage(
           inputId = "ProbTrans_r_dda",
           label = "Probability Integral Transformation",
           choices = c("TRUE", "FASLE"),
-          selected = "TRUE"
+          selected = "FALSE"
         ),
         br(),
         h2("DDA - Independence"), # DDA independence conditions
         numericInput(
           inputId = "NlFun_i_dda",
-          label = "Values Used for Power Transformation",
-          value = 2
+          label = "A Value Used for Power Transformation",
+          value = NA
         ),
         selectInput(
           inputId = "Hetero_i_dda",
           label = "Separate Homoscedasticity Tests",
           choices = c("TRUE", "FALSE"),
-          selected = "TRUE"
+          selected = "FALSE"
         ),
         selectInput(
           inputId = "HsicMethod_i_dda",
@@ -158,17 +221,49 @@ ui <- navbarPage(
           inputId = "Paral_i_dda",
           label = "Multiple Cores",
           choices = c("TRUE", "FALSE"),
-          selected = "TRUE"
+          selected = "FALSE"
         ),
         numericInput(
           inputId = "CoresN_i_dda",
           label = "Number of Cores",
           value = 1
         ),
+        tags$div(
+          id = "boot_section_i_dda",
+          style = "display: flex; align-items: center; margin-bottom: 5px;",
+          tags$label(
+            "Number of Bootstrap Samples",
+            style = "margin: 0; font-weight: 600; font-size: 15px;"
+          ),
+          tags$span(
+            "?",
+            id = "help_boot3",
+            style = "
+      display: inline-block;
+      margin-left: 6px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: #007BFF;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+    "
+          )
+        ),
         numericInput(
-          inputId = "BootN_i_dda",
-          label = "Number of Bootstrap Samples",
-          value = 100
+          "BootN_i_dda",
+          label = NULL,
+          value = 200
+        ),
+        bsPopover(
+          id = "help_boot3",
+          title = NULL,
+          content = "The bootstrap sample size should be greater than 1.",
+          placement = "right",
+          trigger = "hover"
         ),
         selectInput(
           inputId = "BootType_i_dda",
@@ -202,7 +297,7 @@ ui <- navbarPage(
     useShinyjs(), # To run .Rmd file
     sidebarLayout( # Side bar for fourth tab
       sidebarPanel(
-        h2("Select Moderator"), # Select moderator section
+        h2("Select A Moderator"), # Select moderator section
         selectInput(
           inputId = "mod_cdda",
           label = "",
@@ -226,31 +321,77 @@ ui <- navbarPage(
         ),
         br(),
         h2("CDDA - Variables"), # CDDA variables conditions
-        radioButtons( # --- Select Type of Moderator Value ---
-          "Modval_v_cdda", "Select Type of Moderator Value:",
-          choices = c("Preset" = "preset", "Custom Numeric" = "custom"),
-          selected = "preset"
-        ),
-        conditionalPanel( # --- Select Type of Moderator Value: UI for preset character options
-          condition = "input.Modval_v_cdda == 'preset'",
-          selectInput(
-            "modval_preset_v", "Moderator Value Preset Options",
-            choices = c("mean", "median", "JN"),
-            selected = "mean"
+        tags$div(
+          style = "display: flex; align-items: center; margin-bottom: 5px;",
+          tags$label(
+            "Enter A Moderator Value",
+            style = "margin: 0; font-weight: 600; font-size: 15px;"
+          ),
+          tags$span(
+            "?",
+            id = "help_mod1",
+            style = "
+      display: inline-block;
+      margin-left: 6px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: #007BFF;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+    "
           )
         ),
-        conditionalPanel( # --- Select Type of Moderator Value: UI for custom numeric sequence
-          condition = "input.Modval_v_cdda == 'custom'",
-          textInput(
-            "modval_custom_v",
-            "Enter Numeric Values",
-            value = "c(-1, 1)"
+        textInput(
+          inputId = "Modval_v_cdda",
+          label = NULL,
+          placeholder = NULL
+        ),
+        bsPopover(
+          id = "help_mod1",
+          title = NULL,
+          content = "Characters or a numeric sequence specifying the moderator values used in post-hoc probing. Possible characters include mean, median, and JN.",
+          placement = "right",
+          trigger = "hover"
+        ),
+        tags$div(
+          style = "display: flex; align-items: center; margin-bottom: 5px;",
+          tags$label(
+            "Number of Bootstrap Samples",
+            style = "margin: 0; font-weight: 600; font-size: 15px;"
+          ),
+          tags$span(
+            "?",
+            id = "help_boot4",
+            style = "
+      display: inline-block;
+      margin-left: 6px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: #007BFF;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+    "
           )
         ),
         numericInput(
-          inputId = "BootN_v_cdda",
-          label = "Number of Bootstrap Samples",
-          value = 100
+          "BootN_v_cdda",
+          label = NULL,
+          value = 200
+        ),
+        bsPopover(
+          id = "help_boot4",
+          title = NULL,
+          content = "The bootstrap sample size should be greater than 1.",
+          placement = "right",
+          trigger = "hover"
         ),
         selectInput(
           inputId = "BootType_v_cdda",
@@ -267,26 +408,41 @@ ui <- navbarPage(
         ),
         br(),
         h2("CDDA - Independence"), # CDDA independence conditions
-        radioButtons( # --- Select Type of Moderator Value ---
-          "Modval_i_cdda", "Select Type of Moderator Value",
-          choices = c("Preset" = "preset", "Custom Numeric" = "custom"),
-          selected = "preset"
-        ),
-        conditionalPanel( # --- Select Type of Moderator Value: UI for preset character options
-          condition = "input.Modval_i_cdda == 'preset'",
-          selectInput(
-            "modval_preset_i", "Moderator Value Preset Options",
-            choices = c("mean", "median", "JN"),
-            selected = "mean"
+        tags$div(
+          style = "display: flex; align-items: center; margin-bottom: 5px;",
+          tags$label(
+            "Enter A Moderator Value",
+            style = "margin: 0; font-weight: 600; font-size: 15px;"
+          ),
+          tags$span(
+            "?",
+            id = "help_mod2",
+            style = "
+      display: inline-block;
+      margin-left: 6px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: #007BFF;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+    "
           )
         ),
-        conditionalPanel( # --- Select Type of Moderator Value: UI for custom numeric sequence
-          condition = "input.Modval_i_cdda == 'custom'",
-          textInput(
-            "modval_custom_i",
-            "Enter Numeric Values",
-            value = "c(-1, 1)"
-          )
+        textInput(
+          inputId = "Modval_i_cdda",
+          label = NULL,
+          placeholder = NULL
+        ),
+        bsPopover(
+          id = "help_mod2",
+          title = NULL,
+          content = "Characters or a numeric sequence specifying the moderator values used in post-hoc probing. Possible characters include mean, median, and JN.",
+          placement = "right",
+          trigger = "hover"
         ),
         selectInput(
           inputId = "Hetero_i_cdda",
@@ -313,8 +469,8 @@ ui <- navbarPage(
         ),
         numericInput(
           inputId = "NlFun_i_cdda",
-          label = "Values Used for Power Transformation",
-          value = 2
+          label = "A Value Used for Power Transformation",
+          value = NA
         ),
         selectInput(
           inputId = "HsicMethod_i_cdda",
@@ -322,10 +478,42 @@ ui <- navbarPage(
           choices = c("gamma", "eigenvalue", "boot", "permutation"),
           selected = "gamma"
         ),
+        tags$div(
+          id = "boot_section_i_cdda",
+          style = "display: flex; align-items: center; margin-bottom: 5px;",
+          tags$label(
+            "Number of Bootstrap Samples",
+            style = "margin: 0; font-weight: 600; font-size: 15px;"
+          ),
+          tags$span(
+            "?",
+            id = "help_boot5",
+            style = "
+      display: inline-block;
+      margin-left: 6px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: 50%;
+      background-color: #007BFF;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+    "
+          )
+        ),
         numericInput(
-          inputId = "BootN_i_cdda",
-          label = "Number of Bootstrap Samples",
+          "BootN_i_cdda",
+          label = NULL,
           value = 200
+        ),
+        bsPopover(
+          id = "help_boot5",
+          title = NULL,
+          content = "The bootstrap sample size should be greater than 1.",
+          placement = "right",
+          trigger = "hover"
         ),
         selectInput(
           inputId = "BootType_i_cdda",
@@ -396,6 +584,10 @@ server <- function(input, output, session) {
 
   # --- renderDataTable: Summary Statistics Table
   output$descTable_mainvars <- renderDataTable({
+    validate(
+      need(input$cause, "Please select a cause variable."),
+      need(input$effect, "Please select an effect variable.")
+    )
     req(data(), input$cause, input$effect)
     selected_data <- data()[, c(input$cause, input$effect), drop = FALSE]
     desc <- psych::describe(selected_data)
@@ -412,6 +604,10 @@ server <- function(input, output, session) {
 
   # --- renderPlot: Visualization
   output$hist <- renderPlot({
+    validate(
+      need(input$cause, "Please select a cause variable."),
+      need(input$effect, "Please select an effect variable.")
+    )
     req(data(), input$cause, input$effect)
 
     # First histogram
@@ -519,15 +715,21 @@ server <- function(input, output, session) {
 
       shinyjs::show("CI_i_dda") # Make selectable
       updateNumericInput(session, "CI_i_dda", value = "0.95")
+
+      shinyjs::show("help_boot3")
+      shinyjs::show("boot_section_i_dda")
     } else {
       shinyjs::hide("BootN_i_dda") # Make unclickable
-      updateNumericInput(session, "BootN_i_dda", value = NULL)
+      updateNumericInput(session, "BootN_i_dda", value = NA)
 
       shinyjs::hide("BootType_i_dda") # Make unclickable
       updateSelectInput(session, "BootType_i_dda", selected = NULL)
 
       shinyjs::hide("CI_i_dda") # Make unclickable
-      updateNumericInput(session, "CI_i_dda", value = NULL)
+      updateNumericInput(session, "CI_i_dda", value = NA)
+
+      shinyjs::hide("help_boot3")
+      shinyjs::hide("boot_section_i_dda")
     }
   })
 
@@ -554,7 +756,7 @@ server <- function(input, output, session) {
 
   # --- Reactive: Run DDA - Variables
   rundda_var <- reactive({
-    req(data(), input$cause, input$effect)
+    req(data(), input$cause, input$effect, input$BootN_v_dda, input$BootType_v_dda, input$CI_v_dda)
 
     # --- Prepare Formula ----
     # 1. Combine numeric covariates if not NULL
@@ -605,6 +807,10 @@ server <- function(input, output, session) {
     }
 
     # --- DDA Variables Condition ----
+    if (is.na(input$BootN_v_dda) || input$BootN_v_dda == 1 || is.na(input$CI_v_dda) || is.null(input$BootType_v_dda)) {
+      return(NULL)
+    }
+
     out_var <- dda.vardist(
       formula,
       pred = input$cause,
@@ -618,13 +824,17 @@ server <- function(input, output, session) {
 
   # --- renderPrint: Show DDA - Variables Output
   output$dda_var <- renderPrint({
+    validate(
+      need(input$cause, "Please select a cause variable."),
+      need(input$effect, "Please select an effect variable.")
+    )
     req(rundda_var())
     print(rundda_var())
   })
 
   # --- Reactive: Run DDA - Residuals
   rundda_res <- reactive({
-    req(data(), input$cause, input$effect)
+    req(data(), input$cause, input$effect, input$BootN_r_dda, input$BootType_r_dda, input$CI_r_dda)
 
     # --- Prepare Formula ----
     # 1. Combine numeric covariates if not NULL
@@ -673,6 +883,10 @@ server <- function(input, output, session) {
     }
 
     # --- DDA Residuals Condition ----
+    if (is.na(input$BootN_r_dda) || input$BootN_r_dda == 1 || is.na(input$CI_r_dda) || is.null(input$BootType_r_dda)) {
+      return(NULL)
+    }
+
     out_res <- dda.resdist(
       formula,
       pred = input$cause,
@@ -688,13 +902,19 @@ server <- function(input, output, session) {
 
   # --- renderPrint: Show DDA - Residuals Output
   output$dda_res <- renderPrint({
+    validate(
+      need(input$cause, "Please select a cause variable."),
+      need(input$effect, "Please select an effect variable.")
+    )
     req(rundda_res())
     print(rundda_res())
   })
 
   # --- Reactive: Run DDA - Independence
   rundda_ind <- reactive({
-    req(data(), input$cause, input$effect)
+    req(
+      data(), input$cause, input$effect, input$NlFun_i_dda
+    )
 
     # --- Prepare Formula ----
     # 1. Combine numeric covariates if not NULL
@@ -749,16 +969,22 @@ server <- function(input, output, session) {
       hsic.method = input$HsicMethod_i_dda,
       nlfun = input$NlFun_i_dda,
       hetero = input$Hetero_i_dda,
-      diff = input$DiffTest_i_dda,
-      parallelize = ifelse(input$DiffTest_i_dda == "TRUE", input$Paral_i_dda == "TRUE", FALSE),
-      cores = ifelse(input$Paral_i_dda == "FALSE", 0, input$CoresN_i_dda),
+      diff = as.logical(input$DiffTest_i_dda),
       data = df
     )
 
+    args$parallelize <- ifelse(input$DiffTest_i_dda == "TRUE", FALSE, TRUE)
+    args$cores <- ifelse(input$Paral_i_cdda == "FALSE", 0, input$CoresN_i_cdda)
+
+    if ((input$HsicMethod_i_dda %in% c("boot", "permutation") || input$DiffTest_i_dda == "TRUE") &&
+      (is.na(input$BootN_i_dda) || input$BootN_i_dda == 1 || is.na(input$CI_i_dda) || is.null(input$BootType_i_dda))) {
+      return(NULL)
+    }
+
     if (input$HsicMethod_i_dda %in% c("boot", "permutation") || input$DiffTest_i_dda == "TRUE") {
-      args$B <- input$BootN_i_dda
-      args$boot.type <- input$BootType_i_dda
-      args$conf.level <- input$CI_i_dda
+      if (!is.na(input$BootN_i_dda)) args$B <- input$BootN_i_dda
+      if (!is.null(input$BootType_i_dda)) args$boot.type <- input$BootType_i_dda
+      if (!is.na(input$CI_i_dda)) args$conf.level <- input$CI_i_dda
     }
 
     out_ind <- do.call(dda.indep, args)
@@ -768,6 +994,11 @@ server <- function(input, output, session) {
 
   # --- renderPrint: Show DDA - Independent Output
   output$dda_ind <- renderPrint({
+    validate(
+      need(input$cause, "Please select a cause variable."),
+      need(input$effect, "Please select an effect variable."),
+      need(input$NlFun_i_dda, "Please choose a value used for power transformation.")
+    )
     req(rundda_ind())
     print(rundda_ind())
   })
@@ -851,15 +1082,21 @@ server <- function(input, output, session) {
 
       shinyjs::show("CI_i_cdda") # Make selectable
       updateNumericInput(session, "CI_i_cdda", value = "0.95")
+
+      shinyjs::show("BootHelpText_cdda")
+      shinyjs::show("boot_section_i_cdda")
     } else {
       shinyjs::hide("BootN_i_cdda") # Make unclickable
-      updateNumericInput(session, "BootN_i_cdda", value = NULL)
+      updateNumericInput(session, "BootN_i_cdda", value = NA)
 
       shinyjs::hide("BootType_i_cdda") # Make unclickable
       updateSelectInput(session, "BootType_i_cdda", selected = NULL)
 
       shinyjs::hide("CI_i_cdda") # Make unclickable
-      updateNumericInput(session, "CI_i_cdda", value = NULL)
+      updateNumericInput(session, "CI_i_cdda", value = NA)
+
+      shinyjs::hide("BootHelpText_cdda")
+      shinyjs::hide("boot_section_i_cdda")
     }
   })
 
@@ -993,7 +1230,7 @@ server <- function(input, output, session) {
 
   # --- Reactive: Run CDDA - Variables
   runcdda_var <- reactive({
-    req(data(), input$cause, input$effect, input$mod_cdda)
+    req(data(), input$cause, input$effect, input$mod_cdda, input$BootN_v_cdda, input$CI_v_cdda, input$Modval_v_cdda)
 
     # --- Prepare Formula ----
     # 1. Combine numeric covariates if not NULL
@@ -1042,41 +1279,35 @@ server <- function(input, output, session) {
     }
 
     # --- CDDA Variables Condition ----
-
     m <- lm(formula, data = df)
-
     pred <- input$cause
     mod <- input$mod_cdda
 
-    if (input$Modval_v_cdda == "preset") {
-      modval <- input$modval_preset_v 
+    if (is.na(input$BootN_v_cdda) || input$BootN_v_cdda == 1 || is.na(input$CI_v_cdda) || is.null(input$BootType_v_cdda)) {
+      return(NULL)
     } else {
-      modval_text <- input$modval_custom_v
-      modval_split <- strsplit(modval_text, ",")[[1]]
-      modval <- suppressWarnings(as.numeric(trimws(modval_split)))
-      modval <- modval[!is.na(modval)]
-
-      if (length(modval) == 0) {
-        showNotification("Invalid numeric moderator values. Please enter comma-separated numbers.", type = "error")
-        return(NULL)
-      }
+      out_var <- cdda.vardist(
+        formula = m,
+        pred = pred,
+        mod = mod,
+        modval = input$Modval_v_cdda,
+        B = input$BootN_v_cdda,
+        boot.type = input$BootType_v_cdda,
+        conf.level = input$CI_v_cdda,
+        data = df
+      )
+      return(out_var)
     }
-
-    out_var <- cdda.vardist(
-      formula = m,
-      pred = pred,
-      mod = mod,
-      modval = modval,
-      B = input$BootN_v_cdda,
-      boot.type = input$BootType_v_cdda,
-      conf.level = input$CI_v_cdda,
-      data = df
-    )
-    return(out_var)
   })
 
   # --- renderPrint: Show CDDA - Variables Output
   output$cdda_var <- renderPrint({
+    validate(
+      need(input$cause, "Please select a cause variable."),
+      need(input$effect, "Please select an effect variable."),
+      need(input$mod_cdda, "Please select a moderator."),
+      need(input$Modval_v_cdda, "Please enter a moderator value.")
+    )
     req(runcdda_var())
     print(runcdda_var())
   })
@@ -1099,20 +1330,21 @@ server <- function(input, output, session) {
   # --- rendePrint: Show CDDA - Variables Summary
   output$cdda_var_summary <- renderPrint({
     req(runcdda_var())
-    res <- summary(
-      object = runcdda_var(),
+    summary(
+      runcdda_var(),
       skew = input$skew,
       coskew = input$coskew,
       kurt = input$kurt,
       cokurt = input$cokurt
     )
-    print(res)
   })
 
   # --- Reactive: Run CDDA - Independence
   runcdda_ind <- reactive({
-    req(data(), input$cause, input$effect, input$mod_cdda)
-    
+    req(
+      data(), input$cause, input$effect, input$mod_cdda, input$Modval_i_cdda, input$NlFun_i_cdda
+    )
+
     # --- Prepare Formula ----
     # 1. Combine numeric covariates if not NULL
     if (!is.null(input$Covar_n_cdda) && length(input$Covar_n_cdda) > 0) {
@@ -1160,56 +1392,50 @@ server <- function(input, output, session) {
     }
 
     # --- CDDA Independence Condition ----
+    m <- lm(formula, data = df)
     pred <- input$cause
     mod <- input$mod_cdda
-    parallelize <- ifelse(input$DiffTest_i_cdda == "TRUE", FALSE, TRUE)
-    cores <- ifelse(input$Paral_i_cdda == "FALSE", 0, input$CoresN_i_cdda)
-    
-    if (input$Modval_i_cdda == "preset") {
-      modval <- input$modval_preset_i 
-    } else {
-      modval_text <- input$modval_custom_i
-      modval_split <- strsplit(modval_text, ",")[[1]]
-      modval <- suppressWarnings(as.numeric(trimws(modval_split)))
-      modval <- modval[!is.na(modval)]
 
-      if (length(modval) == 0) {
-        showNotification("Invalid numeric moderator values. Please enter comma-separated numbers.", type = "error")
-        return(NULL)
-      }
-    }
-
-    B <- boot.type <- conf.level <-NULL
-    if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
-      B <- input$BootN_i_cdda
-      boot.type <- input$BootType_i_cdda
-      conf.level <- input$CI_i_cdda
-    }
-
-    m <- lm(formula, data = df)
-
-    out_ind <- cdda.indep(
+    args <- list(
       formula = m,
       pred = pred,
       mod = mod,
-      modval = modval,
+      modval = input$Modval_i_cdda,
       hsic.method = input$HsicMethod_i_cdda,
       nlfun = input$NlFun_i_cdda,
       hetero = input$Hetero_i_cdda,
       diff = input$DiffTest_i_cdda,
-      B = B,
-      boot.type = boot.type,
-      conf.level = conf.level,
-      parallelize = parallelize,
-      cores = cores,
       data = df
     )
+
+    args$parallelize <- ifelse(input$DiffTest_i_cdda == "TRUE", FALSE, TRUE)
+    args$cores <- ifelse(input$Paral_i_cdda == "FALSE", 0, input$CoresN_i_cdda)
+
+    if (input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") {
+      if (!is.na(input$BootN_i_cdda)) args$B <- input$BootN_i_cdda
+      if (!is.null(input$BootType_i_cdda)) args$boot.type <- input$BootType_i_cdda
+      if (!is.na(input$CI_i_cdda)) args$conf.level <- input$CI_i_cdda
+    }
+
+    if ((input$HsicMethod_i_cdda %in% c("boot", "permutation") || input$DiffTest_i_cdda == "TRUE") &&
+      (is.na(input$BootN_i_cdda) || input$BootN_i_cdda == 1 || is.na(input$CI_i_cdda) || is.null(input$BootType_i_cdda))) {
+      return(NULL)
+    }
+
+    out_ind <- do.call(cdda.indep, args)
 
     return(out_ind)
   })
 
   # --- renderPrint: Show CDDA - Independence Output
   output$cdda_ind <- renderPrint({
+    validate(
+      need(input$cause, "Please select a cause variable."),
+      need(input$effect, "Please select an effect variable."),
+      need(input$mod_cdda, "Please select a moderator."),
+      need(input$Modval_i_cdda, "Please enter a moderator value."),
+      need(input$NlFun_i_cdda, "Please choose a value used for power transformation.")
+    )
     req(runcdda_ind())
     print(runcdda_ind())
   })
@@ -1234,8 +1460,8 @@ server <- function(input, output, session) {
   output$cdda_ind_summary <- renderPrint({
     req(runcdda_ind())
     cdda_ind_res <- runcdda_ind()
-    res <- summary(
-      object = cdda_ind_res,
+    summary(
+      cdda_ind_res,
       hsic = input$hsic,
       dcor = input$dcor,
       nlfun = input$nlfun,
@@ -1243,7 +1469,6 @@ server <- function(input, output, session) {
       dcor.diff = input$dcor.diff,
       mi.diff = input$mi.diff
     )
-    print(res)
   })
 
   # --- downloadHandler: Download report
@@ -1252,7 +1477,7 @@ server <- function(input, output, session) {
     content = function(file) {
       src <- normalizePath("CDDA_Report.Rmd")
 
-      owd <- setwd(tempdir())  # temporarily dir
+      owd <- setwd(tempdir()) # temporarily dir
       on.exit(setwd(owd))
       file.copy(src, "CDDA_Report.Rmd", overwrite = TRUE)
 
@@ -1334,18 +1559,19 @@ server <- function(input, output, session) {
 shinyApp(ui = ui, server = server)
 
 
-# 1.show more descriptive statistics
-# 2.diagnosis of DDA
-# 4.Make the report.Rmd neat!
-# 5. error massages in cdda : argument is of length zero
+# Places could potentially improve:
+# 1. Show more descriptive statistics
+# 2. Diagnosis of DDA
+# 4. Add more help texts
+# 4. Make the report.Rmd neat! Can you even add .Rmd file separetely? I also found that when ther 
 
 # Problem 1
-# When I use the bootstrap type as bca, the number of bootstrap samples has to be what number?
-# now 1300 need to find the number, this happend in both dda and cdda.
+# Use bca as boottype:
+# DDA Variables Error Message: estimated adjustment 'a' is NA
+# DDA RESIDUAL Error message : argument "prob.trans" is missing, with no default
+# DDA Independence Error Message: estimated adjustment 'a' is NA
+# Do you think a help text or a warning message should put there?
 
 # Problem 2
 # When I select boot for HSIC Inference method
 # Error: object 'critical_value' not found
-
-# 1. Do you think a helptext would help with the moderate value type selection? What should put there?
-# 2. Check defalts of the conditons. If it is uncliable, what the value should be?
